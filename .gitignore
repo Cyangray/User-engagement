@@ -163,3 +163,8 @@ cython_debug/
 
 # Dockerfile
 # Dockerfile
+
+#MacOS stuff
+test/.DS_Store
+src/.DS_Store
+.DS_Store

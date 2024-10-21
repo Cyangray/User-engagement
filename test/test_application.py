@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
-from .__main__ import app
+
+from src.application import app
 
 
 def test_startup():
