@@ -26,7 +26,7 @@ If using Docker, the version used to test this code is docker 27.2.0.
 
 To run it locally, you can just type
 
-```fastapi run src/__main__.py --port 80```
+```fastapi run src/application.py --port 80```
 
 and then visit `http://0.0.0.0:80` on your browser.
 
