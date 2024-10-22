@@ -10,13 +10,22 @@ FROM python:3.12
 WORKDIR /code
 
 
-COPY ./requirements.txt /code/requirements.txt
+RUN pip install poetry==1.8.3
 
 
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+COPY ./pyproject.toml /code/pyproject.toml
+
+
+COPY ./poetry.lock /code/poetry.lock
+
+
+RUN poetry config virtualenvs.create false
+
+
+RUN poetry install --no-interaction --no-ansi
 
 
 COPY ./src /code/src
 
 
-CMD ["fastapi", "run", "src/__main__.py", "--port", "80"]
+CMD ["fastapi", "run", "src/application.py", "--port", "80"]
