@@ -12,9 +12,6 @@ def test_startup():
         assert response.text == "Hello, I'm good!"
 
 
-# TODO: read up about monkeypatch again, I'm probably doing things wrong here. Check https://stackoverflow.com/questions/20503373/how-to-monkeypatch-pythons-datetime-datetime-now-with-py-test
-
-
 def test_valid_user():
     mock_data_user = {
         "user_id": 1,
@@ -76,7 +73,13 @@ def test_invalid_activity():
     with pytest.raises(ValidationError):
         Activity(activity_id=-1)
         Activity(activity_id="1")
-        # TODO: add datetime test
+        Activity(
+            time=datetime(2024, 10, 23, 9, 41, 3, tzinfo=timezone.utc).isoformat(
+                timespec="seconds"
+            )
+        )
+        Activity(time=-3)
+        Activity(time="Pippo")
         Activity(user_id=-1)
         Activity(user_id="1")
         Activity(activity_type="Login")
