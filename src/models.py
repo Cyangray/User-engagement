@@ -86,10 +86,9 @@ def create_superuser(
 
 
 def create_activity(
-    user: User, activity_type: ActivityTypes, activity_details: str
+    user_id: PositiveInt, activity_type: ActivityTypes, activity_details: str
 ) -> Activity:  # TODO: should this be the class' __init__ method?
     activity_id = short_uuid4_generator()
-    user_id = user.user_id
     time = datetime.now().isoformat(timespec="seconds", sep=" ")
     return Activity(
         activity_id=activity_id,
