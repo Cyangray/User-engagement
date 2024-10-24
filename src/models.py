@@ -98,8 +98,3 @@ def create_activity(
         time=time,
         user_id=user_id,
     )
-
-
-# entry = "2020-10-23T12:00:01"#.222222"
-# dt = datetime.strptime(entry, '%Y-%m-%d %H:%M:%S')
-# print(dt)
