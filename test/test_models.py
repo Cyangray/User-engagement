@@ -1,50 +1,85 @@
-from src.models import User, SuperUser, Activity
+from freezegun import freeze_time
+
+from src.models import (
+    User,
+    SuperUser,
+    Activity,
+    ActivityTypes,
+    SuperUserRoles,
+    create_user,
+    create_superuser,
+    create_activity,
+)
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime
 from pydantic import ValidationError
 
-mock_data_user = {
+mock_incomplete_data_user = {
     "user_id": 1,
     "username": "Pippo",
     "email": "aaa@bbb.cc",
+}
+
+mock_data_user = {
+    # "user_id": 1,
+    "username": "Pippo",
+    "email": "aaa@bbb.cc",
     "age": 23,
-    "country": "UK",
+    "country": "GB",
 }
 
 mock_data_superuser = {
-    "user_id": 1,
+    # "user_id": 1,
     "username": "Pippo",
     "email": "aaa@bbb.cc",
     "age": 23,
-    "country": "UK",
-    "superuser_id": 1,
-    "role": "moderator",
+    "country": "GB",
+    # "superuser_id": 1,
+    "role": SuperUserRoles.admin,
 }
 
 mock_data_activity = {
-    "activity_id": 1,
-    "time": datetime(2024, 10, 23, 9, 41, 3, tzinfo=timezone.utc),
-    "user_id": 3,
-    "activity_type": "login",
+    # "activity_id": 1,
+    "time": datetime(2024, 10, 23, 9, 41, 3),
+    # "user_id": 3,
+    "activity_type": ActivityTypes.login,
     "activity_details": "First login of the day",
 }
 
 
-def test_valid_user():
-    assert User(**mock_data_user).model_dump() == mock_data_user
+@freeze_time("2020-10-23 12:00:01")
+def test_validity_models():
+    user = create_user(
+        username=mock_data_user["username"],
+        email=mock_data_user["email"],
+        age=mock_data_user["age"],
+        country=mock_data_user["country"],
+    )
+    superuser = create_superuser(user, mock_data_superuser["role"])
+    activity = create_activity(
+        user=superuser,
+        activity_type=mock_data_activity["activity_type"],
+        activity_details=mock_data_activity["activity_details"],
+    )
 
+    mock_data_user["user_id"] = user.user_id
+    mock_data_superuser["user_id"] = superuser.user_id
+    mock_data_superuser["superuser_id"] = superuser.superuser_id
+    mock_data_activity["user_id"] = activity.user_id
+    mock_data_activity["activity_id"] = activity.activity_id
+    mock_data_activity["time"] = datetime.strptime(
+        "2020-10-23 12:00:01", "%Y-%m-%d %H:%M:%S"
+    )
 
-def test_valid_superuser():
-    assert SuperUser(**mock_data_superuser).model_dump() == mock_data_superuser
-
-
-def test_valid_activity():
-    assert Activity(**mock_data_activity).model_dump() == mock_data_activity
+    assert user.model_dump() == mock_data_user
+    assert superuser.model_dump() == mock_data_superuser
+    assert activity.model_dump() == mock_data_activity
 
 
 def test_invalid_user_data():
     user = User(**mock_data_user)
-
+    with pytest.raises(ValueError):
+        User(**mock_incomplete_data_user)
     with pytest.raises(ValidationError):
         user.user_id = -1
     with pytest.raises(ValidationError):
@@ -59,12 +94,20 @@ def test_invalid_user_data():
         user.age = -22
     with pytest.raises(ValidationError):
         user.country = "UKee"
+    with pytest.raises(ValidationError):
+        user.country = "QQ"
 
 
+@freeze_time("2020-10-23 12:00:01.222222")
 def test_invalid_activity():
     activity = Activity(**mock_data_activity)
     with pytest.raises(ValidationError):
         activity.activity_id = -1
+    # with pytest.raises(ValueError):
+    #    activity.time.isoformat(timespec="microseconds", sep="T")
+    #    print(activity.time.isoformat(timespec="microseconds", sep="T"))
+    # with pytest.raises(ValueError):
+    #    activity.time.isoformat()
     with pytest.raises(ValidationError):
         activity.time = -3
     with pytest.raises(ValidationError):
