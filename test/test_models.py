@@ -21,7 +21,6 @@ mock_incomplete_data_user = {
 }
 
 mock_data_user = {
-    # "user_id": 1,
     "username": "Pippo",
     "email": "aaa@bbb.cc",
     "age": 23,
@@ -29,19 +28,15 @@ mock_data_user = {
 }
 
 mock_data_superuser = {
-    # "user_id": 1,
     "username": "Pippo",
     "email": "aaa@bbb.cc",
     "age": 23,
     "country": "GB",
-    # "superuser_id": 1,
     "role": SuperUserRoles.admin,
 }
 
 mock_data_activity = {
-    # "activity_id": 1,
     "time": datetime(2024, 10, 23, 9, 41, 3),
-    # "user_id": 3,
     "activity_type": ActivityTypes.login,
     "activity_details": "First login of the day",
 }
@@ -98,16 +93,14 @@ def test_invalid_user_data():
         user.country = "QQ"
 
 
-@freeze_time("2020-10-23 12:00:01.222222")
 def test_invalid_activity():
     activity = Activity(**mock_data_activity)
     with pytest.raises(ValidationError):
         activity.activity_id = -1
-    # with pytest.raises(ValueError):
-    #    activity.time.isoformat(timespec="microseconds", sep="T")
-    #    print(activity.time.isoformat(timespec="microseconds", sep="T"))
-    # with pytest.raises(ValueError):
-    #    activity.time.isoformat()
+    with pytest.raises(ValidationError):
+        activity.time = datetime.now().isoformat(timespec="microseconds", sep="T")
+    with pytest.raises(ValidationError):
+        activity.time = datetime.now().isoformat(sep="T")
     with pytest.raises(ValidationError):
         activity.time = -3
     with pytest.raises(ValidationError):
