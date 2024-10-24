@@ -52,7 +52,7 @@ def test_validity_models():
     )
     superuser = create_superuser(user, mock_data_superuser["role"])
     activity = create_activity(
-        user=superuser,
+        user_id=superuser.user_id,
         activity_type=mock_data_activity["activity_type"],
         activity_details=mock_data_activity["activity_details"],
     )
