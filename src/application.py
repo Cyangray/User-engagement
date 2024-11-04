@@ -50,7 +50,7 @@ async def post_activity(activity: Activity) -> Activity:
 
 
 @app.get("/activities/", response_model=list[Activity])
-async def read_activities_by_userid(user_id: PositiveInt):
+async def read_activities_by_userid(user_id: PositiveInt) -> list[Activity]:
     if user_id not in users_id_db:
         raise HTTPException(status_code=404, detail="User ID not found.")
     if user_id not in [item.user_id for item in activities_db]:

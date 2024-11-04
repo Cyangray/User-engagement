@@ -3,12 +3,12 @@ from enum import Enum
 from pydantic import (
     BaseModel,
     PositiveInt,
-    StringConstraints,
     EmailStr,
     field_validator,
     model_validator,
+    Field,
 )
-from typing_extensions import Annotated, Optional, Self
+from typing import Self
 from pydantic_extra_types.country import CountryAlpha2
 
 
@@ -27,10 +27,10 @@ class SuperUserRoles(str, Enum):
 
 class User(BaseModel, validate_assignment=True):
     user_id: PositiveInt
-    username: Annotated[str, StringConstraints(min_length=2, pattern=r"^[a-zA-Z]*$")]
+    username: str = Field(min_length=2, pattern=r"^[a-zA-Z]*$")
     email: EmailStr
-    age: Optional[PositiveInt]
-    country: Optional[CountryAlpha2]
+    age: PositiveInt | None
+    country: CountryAlpha2 | None
 
     @model_validator(mode="after")
     def check_if_both_age_and_country(self) -> Self:
@@ -46,7 +46,7 @@ class SuperUser(User, validate_assignment=True):
     role: SuperUserRoles
 
 
-class Activity(BaseModel, validate_assignment=True):  # , arbitrary_types_allowed=True):
+class Activity(BaseModel, validate_assignment=True):
     activity_id: PositiveInt
     time: datetime
     user_id: PositiveInt
