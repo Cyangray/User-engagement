@@ -11,6 +11,8 @@ from pydantic import (
 from typing import Self
 from pydantic_extra_types.country import CountryAlpha2
 
+import re
+
 
 class ActivityTypes(str, Enum):
     click = "click"
@@ -27,10 +29,24 @@ class SuperUserRoles(str, Enum):
 
 class User(BaseModel, validate_assignment=True):
     user_id: PositiveInt
-    username: str = Field(min_length=2, pattern=r"^[a-zA-Z]*$")
+    username: str = Field(
+        min_length=2,
+        pattern=r"^[a-zA-Z]*$",
+        description="Username must contain only letters and be at least two characters long.",
+    )
     email: EmailStr
     age: PositiveInt | None
     country: CountryAlpha2 | None
+
+    @field_validator("username", mode="before")
+    def username_validator(cls, v):
+        pattern = r"^[a-zA-Z]*$"
+        if re.match(pattern, v) and len(v) >= 2:
+            return v
+        else:
+            raise ValueError(
+                "Username must contain only letters and be at least two characters long."
+            )
 
     @model_validator(mode="after")
     def check_if_both_age_and_country(self) -> Self:
@@ -41,7 +57,16 @@ class User(BaseModel, validate_assignment=True):
         return self
 
 
-class SuperUser(User, validate_assignment=True):
+class SuperUser(BaseModel, validate_assignment=True):
+    user_id: PositiveInt
+    username: str = Field(
+        min_length=2,
+        pattern=r"^[a-zA-Z]*$",
+        description="Username must contain only letters and be at least two characters long.",
+    )
+    email: EmailStr
+    age: PositiveInt | None
+    country: CountryAlpha2 | None
     superuser_id: PositiveInt
     role: SuperUserRoles
 
@@ -51,16 +76,17 @@ class Activity(BaseModel, validate_assignment=True):
     time: datetime
     user_id: PositiveInt
     activity_type: ActivityTypes
-    activity_details: str
+    activity_details: str | None
 
     @field_validator("time", mode="before")
     def prevalidate_datetime(cls, entry):
         if isinstance(entry, str):
             try:
-                return datetime.strptime(entry, "%Y-%m-%d %H:%M:%S")
+                assert ("Z" in entry) or ("+00:00" in entry)
+                return datetime.fromisoformat(entry)
             except ValueError:
                 raise ValueError(
-                    'Incorrect date string format, should be "YYYY-MM-DD HH:MM:SS" (UTC time)'
+                    'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+00:00" (UTC time)'
                 )
         else:
             raise ValueError("Input format for time attribute should be a str.")

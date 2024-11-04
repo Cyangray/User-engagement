@@ -5,10 +5,9 @@ from src.models import (
 )
 import pytest
 from datetime import datetime
-from test.conftest import mock_data_user, mock_data_superuser, mock_data_activity
 
 
-def test_validity_user():
+def test_validity_user(mock_data_user):
     user = User(**mock_data_user)
     assert "user_id" in user.__dict__
     assert user.username == mock_data_user["username"]
@@ -24,7 +23,7 @@ def test_validity_user():
         for item in [-1, "-1", "fffaf", 4.33, "4.33"]
     ],
 )
-def test_invalid_user_user_id(user_id):
+def test_invalid_user_user_id(user_id, mock_data_user):
     user = User(**mock_data_user)
     user.user_id = user_id
 
@@ -36,7 +35,7 @@ def test_invalid_user_user_id(user_id):
         for item in [12, "12", "Pippo222", 3.5, "3.5"]
     ],
 )
-def test_invalid_user_username(username):
+def test_invalid_user_username(username, mock_data_user):
     user = User(**mock_data_user)
     user.username = username
 
@@ -58,7 +57,7 @@ def test_invalid_user_username(username):
         ]
     ],
 )
-def test_invalid_user_email(email):
+def test_invalid_user_email(email, mock_data_user):
     user = User(**mock_data_user)
     user.email = email
 
@@ -66,7 +65,7 @@ def test_invalid_user_email(email):
 @pytest.mark.parametrize(
     "age", [pytest.param(item, marks=pytest.mark.xfail) for item in [-2, "-2"]]
 )
-def test_invalid_user_age(age):
+def test_invalid_user_age(age, mock_data_user):
     user = User(**mock_data_user)
     user.age = age
 
@@ -78,12 +77,12 @@ def test_invalid_user_age(age):
         for item in ["XX", -2, "2", "Great Britain"]
     ],
 )
-def test_invalid_user_country(country):
+def test_invalid_user_country(country, mock_data_user):
     user = User(**mock_data_user)
     user.country = country
 
 
-def test_validity_superuser():
+def test_validity_superuser(mock_data_user, mock_data_superuser):
     superuser = SuperUser(**mock_data_user, **mock_data_superuser)
     assert "user_id" in superuser.__dict__
     assert "superuser_id" in superuser.__dict__
@@ -101,7 +100,9 @@ def test_validity_superuser():
         for item in [-1, "-1", "fffaf", 4.33, "4.33"]
     ],
 )
-def test_invalid_superuser_superuser_id(superuser_id):
+def test_invalid_superuser_superuser_id(
+    superuser_id, mock_data_user, mock_data_superuser
+):
     superuser = SuperUser(**mock_data_user, **mock_data_superuser)
     superuser.superuser_id = superuser_id
 
@@ -113,21 +114,19 @@ def test_invalid_superuser_superuser_id(superuser_id):
         for item in ["Admin", "Pippo", "", 33]
     ],
 )
-def test_invalid_superuser_role(role):
+def test_invalid_superuser_role(role, mock_data_user, mock_data_superuser):
     superuser = SuperUser(**mock_data_user, **mock_data_superuser)
     superuser.role = role
 
 
-def test_validity_activity():
+def test_validity_activity(mock_data_activity):
     activity = Activity(**mock_data_activity)
     assert "activity_id" in activity.__dict__
     assert activity.user_id == mock_data_activity["user_id"]
     assert activity.activity_details == mock_data_activity["activity_details"]
     assert activity.activity_type == mock_data_activity["activity_type"]
     assert isinstance(activity.time, datetime)
-    assert activity.time == datetime.strptime(
-        mock_data_activity["time"], "%Y-%m-%d %H:%M:%S"
-    )
+    assert activity.time == datetime.fromisoformat(mock_data_activity["time"])
 
 
 @pytest.mark.parametrize(
@@ -137,7 +136,7 @@ def test_validity_activity():
         for item in [-1, "-1", "fffaf", 4.33, "4.33"]
     ],
 )
-def test_invalid_activity_activity_id(activity_id):
+def test_invalid_activity_activity_id(activity_id, mock_data_activity):
     activity = Activity(**mock_data_activity)
     activity.activity_id = activity_id
 
@@ -147,14 +146,12 @@ def test_invalid_activity_activity_id(activity_id):
     [
         pytest.param(item, marks=pytest.mark.xfail)
         for item in [
-            datetime.now().isoformat(timespec="microseconds", sep="T"),
             -3,
             "Pippo",
-            datetime.now().isoformat(sep="T"),
         ]
     ],
 )
-def test_invalid_activity_time(time):
+def test_invalid_activity_time(time, mock_data_activity):
     activity = Activity(**mock_data_activity)
     activity.time = time
 
@@ -163,7 +160,7 @@ def test_invalid_activity_time(time):
     "activity_type",
     [pytest.param(item, marks=pytest.mark.xfail) for item in ["Login", "Pippo", ""]],
 )
-def test_invalid_activity_activity_type(activity_type):
+def test_invalid_activity_activity_type(activity_type, mock_data_activity):
     activity = Activity(**mock_data_activity)
     activity.activity_type = activity_type
 
@@ -172,6 +169,6 @@ def test_invalid_activity_activity_type(activity_type):
     "activity_details",
     [pytest.param(item, marks=pytest.mark.xfail) for item in [33, -1, 3.5]],
 )
-def test_invalid_activity_activity_detail(activity_details):
+def test_invalid_activity_activity_detail(activity_details, mock_data_activity):
     activity = Activity(**mock_data_activity)
     activity.activity_details = activity_details

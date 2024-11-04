@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
-from pydantic import PositiveInt
+from pydantic import PositiveInt, EmailStr
+from pydantic_extra_types.country import CountryAlpha2
 
-from src.models import User, Activity, SuperUser
+from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
+from tools.tools import short_uuid4_generator
 
 app = FastAPI()
 
@@ -22,7 +24,16 @@ activities_id_db = []
 
 
 @app.post("/users/", response_model=User)
-def post_user(user: User) -> User:
+def post_user(
+    username: str,
+    email: EmailStr,
+    age: PositiveInt = None,
+    country: CountryAlpha2 = None,
+) -> User:
+    user_id = short_uuid4_generator()
+    user = User(
+        user_id=user_id, username=username, email=email, age=age, country=country
+    )
     if user.email in emails_db:
         raise HTTPException(status_code=400, detail="Email already registered")
     users_id_db.append(user.user_id)
@@ -32,7 +43,24 @@ def post_user(user: User) -> User:
 
 
 @app.post("/superusers/", response_model=SuperUser)
-def post_superuser(superuser: SuperUser) -> SuperUser:
+def post_superuser(
+    user_id: PositiveInt,
+    username: str,
+    email: EmailStr,
+    role: SuperUserRoles,
+    age: PositiveInt = None,
+    country: CountryAlpha2 = None,
+) -> SuperUser:
+    superuser_id = short_uuid4_generator()
+    superuser = SuperUser(
+        user_id=user_id,
+        superuser_id=superuser_id,
+        username=username,
+        email=email,
+        role=role,
+        age=age,
+        country=country,
+    )
     if superuser.email in emails_db:
         raise HTTPException(status_code=400, detail="Email already registered")
     superusers_id_db.append(superuser.user_id)
@@ -41,7 +69,22 @@ def post_superuser(superuser: SuperUser) -> SuperUser:
 
 
 @app.post("/activities/", response_model=Activity)
-async def post_activity(activity: Activity) -> Activity:
+async def post_activity(
+    time: str,
+    user_id: PositiveInt,
+    activity_type: ActivityTypes,
+    activity_details: str = None,
+) -> Activity:
+    activity_id = short_uuid4_generator()
+    activity = Activity(
+        activity_id=activity_id,
+        time=time,
+        user_id=user_id,
+        activity_type=activity_type,
+        activity_details=activity_details,
+    )
+    print(user_id)
+    print(users_id_db)
     if activity.user_id not in users_id_db:
         raise HTTPException(status_code=404, detail="User ID not found")
     activities_id_db.append(activity.activity_id)

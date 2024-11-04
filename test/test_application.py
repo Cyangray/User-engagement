@@ -1,11 +1,6 @@
 from fastapi.testclient import TestClient
 
 from src.application import app
-from test.conftest import (
-    mock_data_user,
-    mock_data_activity,
-    mock_data_superuser_complete,
-)
 
 client = TestClient(app)
 
@@ -16,10 +11,10 @@ def test_startup():
     assert response.text == "Hello, I'm good!"
 
 
-def test_post_user():
+def test_post_user(mock_data_user):
     response = client.post(
         "/users/",
-        json=mock_data_user,
+        params=mock_data_user,
     )
     data = response.json()
     assert "user_id" in data
@@ -30,8 +25,8 @@ def test_post_user():
     assert response.status_code == 200
 
 
-def test_post_superuser():
-    response = client.post("/superusers/", json=mock_data_superuser_complete)
+def test_post_superuser(mock_data_superuser_complete):
+    response = client.post("/superusers/", params=mock_data_superuser_complete)
     data = response.json()
     assert "superuser_id" in data
     assert data["user_id"] == mock_data_superuser_complete["user_id"]
@@ -43,8 +38,8 @@ def test_post_superuser():
     assert response.status_code == 200
 
 
-def test_post_activity():
-    response = client.post("/activities/", json=mock_data_activity)
+def test_post_activity(mock_data_activity):
+    response = client.post("/activities/", params=mock_data_activity)
     data = response.json()
     assert "activity_id" in data
     assert "time" in data
@@ -54,7 +49,7 @@ def test_post_activity():
     assert response.status_code == 200
 
 
-def test_filter_activities_by_user_id():
+def test_filter_activities_by_user_id(mock_data_user, mock_data_activity):
     client.post("/users/", json=mock_data_user)
     client.post("/activities/", json=mock_data_activity)
     response = client.get(f"/activities/?user_id={mock_data_user["user_id"]}")
@@ -66,7 +61,7 @@ def test_filter_activities_by_user_id():
     assert response.status_code == 200
 
 
-def test_fail_filter_activities_user_id_not_found():
+def test_fail_filter_activities_user_id_not_found(mock_data_user, mock_data_activity):
     client.post("/users/", json=mock_data_user)
     client.post("/activities/", json=mock_data_activity)
     response = client.get(f"/activities/?user_id={mock_data_user["user_id"] + 1}")
