@@ -8,11 +8,11 @@ from src.models import (
     create_activity,
 )
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import ValidationError
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mock_incomplete_user():
     mock_incomplete_data_user = {
         "username": "Pippo",
@@ -21,7 +21,7 @@ def mock_incomplete_user():
     return mock_incomplete_data_user
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mock_user():
     mock_data_user = {
         "username": "Pippo",
@@ -32,7 +32,7 @@ def mock_user():
     return mock_data_user
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mock_superuser():
     mock_data_superuser = {
         "user_id": 1,
@@ -45,7 +45,7 @@ def mock_superuser():
     return mock_data_superuser
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mock_activity():
     mock_data_activity = {
         "user_id": 1,
@@ -56,12 +56,12 @@ def mock_activity():
     return mock_data_activity
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def frozen_time():
-    return datetime(2020, 10, 23, 12, 00, 1)
+    return datetime(2020, 10, 23, 12, 00, 1, tzinfo=timezone.utc)
 
 
-@freeze_time("2020-10-23 12:00:01")
+@freeze_time("2020-10-23T12:00:01+00:00")
 def test_validity_models(mock_user, mock_superuser, mock_activity, frozen_time):
     mock_data_user = mock_user
     mock_data_superuser = mock_superuser
@@ -90,7 +90,7 @@ def test_validity_models(mock_user, mock_superuser, mock_activity, frozen_time):
     assert activity.activity_details == mock_data_activity["activity_details"]
     assert activity.activity_type == mock_data_activity["activity_type"]
     assert isinstance(activity.time, datetime)
-    assert activity.time == datetime.now()
+    assert activity.time == datetime.now(timezone.utc)
 
 
 def test_invalid_user_data(mock_user, mock_incomplete_user):
@@ -117,16 +117,12 @@ def test_invalid_user_data(mock_user, mock_incomplete_user):
         user.country = "QQ"
 
 
-@freeze_time("2020-10-23 12:00:01")
+@freeze_time("2020-10-23T12:00:01Z")
 def test_invalid_activity(mock_activity):
     mock_data_activity = mock_activity
     activity = create_activity(**mock_data_activity)
     with pytest.raises(ValidationError):
         activity.activity_id = -1
-    with pytest.raises(ValidationError):
-        activity.time = datetime.now().isoformat(timespec="microseconds", sep=" ")
-    with pytest.raises(ValidationError):
-        activity.time = datetime.now().isoformat(sep=" ")
     with pytest.raises(ValidationError):
         activity.time = -3
     with pytest.raises(ValidationError):

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pydantic import (
     BaseModel,
@@ -65,10 +65,11 @@ class Activity(BaseModel, validate_assignment=True):
             raise ValueError("Integers are not valid datetime entries")
         if isinstance(entry, str):
             try:
-                datetime.strptime(entry, "%Y-%m-%dT%H:%M:%S")
+                print(entry)
+                return datetime.fromisoformat(entry)
             except ValueError:
                 raise ValueError(
-                    'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SS" (UTC time)'
+                    'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+00:00" (UTC time)'
                 )
         return entry
 
@@ -99,7 +100,7 @@ def create_activity(
     user_id, activity_type: ActivityTypes, activity_details: str
 ) -> Activity:
     activity_id = short_uuid4_generator()
-    time = datetime.now().isoformat(timespec="seconds")
+    time = datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
     return Activity(
         activity_id=activity_id,
         activity_type=activity_type,
