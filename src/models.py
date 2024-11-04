@@ -42,7 +42,12 @@ class User(BaseModel, validate_assignment=True):
         return self
 
 
-class SuperUser(User, validate_assignment=True):
+class SuperUser(BaseModel, validate_assignment=True):
+    user_id: PositiveInt
+    username: Annotated[str, StringConstraints(min_length=2, pattern=r"^[a-zA-Z]*$")]
+    email: EmailStr
+    age: Optional[PositiveInt]
+    country: Optional[CountryAlpha2]
     superuser_id: PositiveInt
     role: SuperUserRoles
 
@@ -60,17 +65,15 @@ class Activity(BaseModel, validate_assignment=True):
             raise ValueError("Integers are not valid datetime entries")
         if isinstance(entry, str):
             try:
-                datetime.strptime(entry, "%Y-%m-%d %H:%M:%S")
+                datetime.strptime(entry, "%Y-%m-%dT%H:%M:%S")
             except ValueError:
                 raise ValueError(
-                    'Incorrect data format, should be "YYYY-MM-DD HH:MM:SS" (UTC time)'
+                    'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SS" (UTC time)'
                 )
         return entry
 
 
-def create_user(
-    username, email, age=None, country=None
-) -> User:  # TODO: should this be the class' __init__ method?
+def create_user(username, email, age=None, country=None) -> User:
     user_id = short_uuid4_generator()
     return User(
         user_id=user_id, username=username, email=email, age=age, country=country
@@ -78,19 +81,25 @@ def create_user(
 
 
 def create_superuser(
-    user: User, role: SuperUserRoles
-) -> SuperUser:  # TODO: should this be the class' __init__ method?
+    user_id, username, email, role: SuperUserRoles, age=None, country=None
+) -> SuperUser:
     superuser_id = short_uuid4_generator()
-    user_dict = user.model_dump()
-    return SuperUser(superuser_id=superuser_id, role=role, **user_dict)
+    return SuperUser(
+        superuser_id=superuser_id,
+        role=role,
+        user_id=user_id,
+        username=username,
+        email=email,
+        age=age,
+        country=country,
+    )
 
 
 def create_activity(
-    user: User, activity_type: ActivityTypes, activity_details: str
-) -> Activity:  # TODO: should this be the class' __init__ method?
+    user_id, activity_type: ActivityTypes, activity_details: str
+) -> Activity:
     activity_id = short_uuid4_generator()
-    user_id = user.user_id
-    time = datetime.now().isoformat(timespec="seconds", sep=" ")
+    time = datetime.now().isoformat(timespec="seconds")
     return Activity(
         activity_id=activity_id,
         activity_type=activity_type,
