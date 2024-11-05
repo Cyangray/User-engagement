@@ -1,32 +1,25 @@
 import pytest
 
-from tools.tools import short_uuid4_generator
+
+@pytest.fixture(scope="session")
+def user_id_test():
+    return 164280569
 
 
 @pytest.fixture(scope="session")
-def user_id():
-    return short_uuid4_generator()
+def superuser_id_test():
+    return 1157475173
 
 
 @pytest.fixture(scope="session")
-def superuser_id():
-    return short_uuid4_generator()
+def activity_id_test():
+    return 1157425173
 
 
 @pytest.fixture(scope="session")
-def activity_id():
-    return short_uuid4_generator()
-
-
-# user_id = short_uuid4_generator()
-# superuser_id = short_uuid4_generator()
-# activity_id = short_uuid4_generator()
-
-
-@pytest.fixture(scope="session")
-def mock_incomplete_data_user(user_id):
+def mock_incomplete_data_user(user_id_test):
     mock_incomplete_data_user = {
-        "user_id": user_id,
+        "user_id": user_id_test,
         "username": "Pippo",
         "email": "aaa@bbb.cc",
     }
@@ -34,9 +27,9 @@ def mock_incomplete_data_user(user_id):
 
 
 @pytest.fixture(scope="session")
-def mock_data_user(user_id):
+def mock_data_user(user_id_test):
     mock_data_user = {
-        "user_id": user_id,
+        "user_id": user_id_test,
         "username": "Pippo",
         "email": "aaa@bbb.cc",
         "age": 23,
@@ -46,9 +39,9 @@ def mock_data_user(user_id):
 
 
 @pytest.fixture(scope="session")
-def mock_data_user2(user_id):
+def mock_data_user2(user_id_test):
     mock_data_user2 = {
-        "user_id": user_id + 1,
+        "user_id": user_id_test + 1,
         "username": "Pippo2",
         "email": "aaa2@bbb.cc",
         "age": 24,
@@ -58,16 +51,16 @@ def mock_data_user2(user_id):
 
 
 @pytest.fixture(scope="session")
-def mock_data_superuser(superuser_id):
-    mock_data_superuser = {"superuser_id": superuser_id, "role": "admin"}
+def mock_data_superuser(superuser_id_test):
+    mock_data_superuser = {"superuser_id": superuser_id_test, "role": "admin"}
     return mock_data_superuser
 
 
 @pytest.fixture(scope="session")
-def mock_data_activity(user_id, activity_id):
+def mock_data_activity(user_id_test, activity_id_test):
     mock_data_activity = {
-        "user_id": user_id,
-        "activity_id": activity_id,
+        "user_id": user_id_test,
+        "activity_id": activity_id_test,
         "time": "2020-04-23T12:00:01Z",
         "activity_type": "login",
         "activity_details": "First login of the day",
@@ -76,10 +69,10 @@ def mock_data_activity(user_id, activity_id):
 
 
 @pytest.fixture(scope="session")
-def mock_data_superuser_complete(user_id, superuser_id):
+def mock_data_superuser_complete(user_id_test, superuser_id_test):
     mock_data_superuser_complete = {
-        "superuser_id": superuser_id,
-        "user_id": user_id,
+        "superuser_id": superuser_id_test,
+        "user_id": user_id_test,
         "username": "Pippo",
         "email": "eee@bbb.cc",
         "age": 23,

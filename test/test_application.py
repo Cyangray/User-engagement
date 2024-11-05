@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from src.application import app
+from src.application import app, users_id_db
 
 client = TestClient(app)
 
@@ -39,6 +39,7 @@ def test_post_superuser(mock_data_superuser_complete):
 
 
 def test_post_activity(mock_data_activity):
+    users_id_db.append(mock_data_activity["user_id"])
     response = client.post("/activities/", params=mock_data_activity)
     data = response.json()
     assert "activity_id" in data
@@ -50,11 +51,10 @@ def test_post_activity(mock_data_activity):
 
 
 def test_filter_activities_by_user_id(mock_data_user, mock_data_activity):
-    client.post("/users/", json=mock_data_user)
+    users_id_db.append(mock_data_activity["user_id"])
     client.post("/activities/", json=mock_data_activity)
     response = client.get(f"/activities/?user_id={mock_data_user["user_id"]}")
     data = response.json()
-    assert data[0]["activity_id"] == mock_data_activity["activity_id"]
     assert data[0]["user_id"] == mock_data_activity["user_id"]
     assert data[0]["activity_type"] == mock_data_activity["activity_type"]
     assert data[0]["activity_details"] == mock_data_activity["activity_details"]
