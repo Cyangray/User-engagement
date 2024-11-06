@@ -57,16 +57,7 @@ class User(BaseModel, validate_assignment=True):
         return self
 
 
-class SuperUser(BaseModel, validate_assignment=True):
-    user_id: PositiveInt
-    username: str = Field(
-        min_length=2,
-        pattern=r"^[a-zA-Z]*$",
-        description="Username must contain only letters and be at least two characters long.",
-    )
-    email: EmailStr
-    age: PositiveInt | None
-    country: CountryAlpha2 | None
+class SuperUser(User, validate_assignment=True):
     superuser_id: PositiveInt
     role: SuperUserRoles
 
