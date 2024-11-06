@@ -1,17 +1,18 @@
 from datetime import datetime
 from enum import Enum
 from pydantic import (
-    BaseModel,
     PositiveInt,
     EmailStr,
     field_validator,
     model_validator,
-    Field,
+    # Field,
 )
 from typing import Self
 from pydantic_extra_types.country import CountryAlpha2
 
 import re
+
+from sqlmodel import SQLModel, Field
 
 
 class ActivityTypes(str, Enum):
@@ -27,16 +28,13 @@ class SuperUserRoles(str, Enum):
     support = "support"
 
 
-class User(BaseModel, validate_assignment=True):
-    user_id: PositiveInt
-    username: str = Field(
-        min_length=2,
-        pattern=r"^[a-zA-Z]*$",
-        description="Username must contain only letters and be at least two characters long.",
-    )
-    email: EmailStr
-    age: PositiveInt | None
-    country: CountryAlpha2 | None
+class User(SQLModel, validate_assignment=True, table=True):
+    __tablename__ = "users"
+    user_id: PositiveInt = Field(primary_key=True)
+    username: str = Field(min_length=2, index=True)
+    email: EmailStr = Field(index=True)
+    age: PositiveInt | None = Field(default=None, index=True)
+    country: CountryAlpha2 | None = Field(default=None, index=True)
 
     @field_validator("username", mode="before")
     def username_validator(cls, v):
@@ -57,26 +55,23 @@ class User(BaseModel, validate_assignment=True):
         return self
 
 
-class SuperUser(BaseModel, validate_assignment=True):
-    user_id: PositiveInt
-    username: str = Field(
-        min_length=2,
-        pattern=r"^[a-zA-Z]*$",
-        description="Username must contain only letters and be at least two characters long.",
-    )
-    email: EmailStr
-    age: PositiveInt | None
-    country: CountryAlpha2 | None
-    superuser_id: PositiveInt
-    role: SuperUserRoles
+class SuperUser(SQLModel, validate_assignment=True):
+    user_id: PositiveInt = Field(index=True)
+    username: str = Field(min_length=2, index=True)
+    email: EmailStr = Field(index=True)
+    age: PositiveInt | None = Field(default=None, index=True)
+    country: CountryAlpha2 | None = Field(default=None, index=True)
+    superuser_id: PositiveInt = Field(primary_key=True)
+    role: SuperUserRoles = Field(index=True)
 
 
-class Activity(BaseModel, validate_assignment=True):
-    activity_id: PositiveInt
-    time: datetime
-    user_id: PositiveInt
-    activity_type: ActivityTypes
-    activity_details: str | None
+class Activity(SQLModel, validate_assignment=True, table=True):
+    __tablename__ = "activities"
+    activity_id: PositiveInt = Field(primary_key=True)
+    time: datetime = Field(index=True)
+    user_id: PositiveInt = Field(index=True)
+    activity_type: ActivityTypes = Field(index=True)
+    activity_details: str | None = Field(default=None, index=True)
 
     @field_validator("time", mode="before")
     def prevalidate_datetime(cls, entry):

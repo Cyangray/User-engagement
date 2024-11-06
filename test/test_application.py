@@ -5,13 +5,13 @@ from src.application import app, users_id_db
 client = TestClient(app)
 
 
-def test_startup():
+def test_startup() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert response.text == "Hello, I'm good!"
 
 
-def test_post_user(mock_data_user):
+def test_post_user(mock_data_user) -> None:
     response = client.post(
         "/users/",
         params=mock_data_user,
@@ -25,7 +25,7 @@ def test_post_user(mock_data_user):
     assert response.status_code == 200
 
 
-def test_post_superuser(mock_data_superuser_complete):
+def test_post_superuser(mock_data_superuser_complete) -> None:
     response = client.post("/superusers/", params=mock_data_superuser_complete)
     data = response.json()
     assert "superuser_id" in data
@@ -36,7 +36,7 @@ def test_post_superuser(mock_data_superuser_complete):
     assert response.status_code == 200
 
 
-def test_post_activity(mock_data_activity):
+def test_post_activity(mock_data_activity) -> None:
     users_id_db.append(mock_data_activity["user_id"])
     response = client.post("/activities/", params=mock_data_activity)
     data = response.json()
@@ -48,7 +48,7 @@ def test_post_activity(mock_data_activity):
     assert response.status_code == 200
 
 
-def test_filter_activities_by_user_id(mock_data_user, mock_data_activity):
+def test_filter_activities_by_user_id(mock_data_user, mock_data_activity) -> None:
     users_id_db.append(mock_data_activity["user_id"])
     client.post("/activities/", json=mock_data_activity)
     response = client.get(f"/activities/?user_id={mock_data_user["user_id"]}")
@@ -60,7 +60,9 @@ def test_filter_activities_by_user_id(mock_data_user, mock_data_activity):
     assert response.status_code == 200
 
 
-def test_fail_filter_activities_user_id_not_found(mock_data_user, mock_data_activity):
+def test_fail_filter_activities_user_id_not_found(
+    mock_data_user, mock_data_activity
+) -> None:
     client.post("/activities/", json=mock_data_activity)
     response = client.get(f"/activities/?user_id={mock_data_user["user_id"] + 1}")
     data = response.json()
