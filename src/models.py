@@ -55,12 +55,7 @@ class User(SQLModel, validate_assignment=True, table=True):
         return self
 
 
-class SuperUser(SQLModel, validate_assignment=True):
-    user_id: PositiveInt = Field(index=True)
-    username: str = Field(min_length=2, index=True)
-    email: EmailStr = Field(index=True)
-    age: PositiveInt | None = Field(default=None, index=True)
-    country: CountryAlpha2 | None = Field(default=None, index=True)
+class SuperUser(User, validate_assignment=True):
     superuser_id: PositiveInt = Field(primary_key=True)
     role: SuperUserRoles = Field(index=True)
 
