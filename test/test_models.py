@@ -9,11 +9,7 @@ from datetime import datetime
 
 def test_validity_user(mock_data_user):
     user = User(**mock_data_user)
-    assert "user_id" in user.__dict__
-    assert user.username == mock_data_user["username"]
-    assert user.email == mock_data_user["email"]
-    assert user.age == mock_data_user["age"]
-    assert user.country == mock_data_user["country"]
+    assert user.__dict__ == mock_data_user
 
 
 @pytest.mark.parametrize(
@@ -82,15 +78,9 @@ def test_invalid_user_country(country, mock_data_user):
     user.country = country
 
 
-def test_validity_superuser(mock_data_user, mock_data_superuser):
-    superuser = SuperUser(**mock_data_user, **mock_data_superuser)
-    assert "user_id" in superuser.__dict__
-    assert "superuser_id" in superuser.__dict__
-    assert superuser.username == mock_data_user["username"]
-    assert superuser.email == mock_data_user["email"]
-    assert superuser.age == mock_data_user["age"]
-    assert superuser.country == mock_data_user["country"]
-    assert superuser.role == mock_data_superuser["role"]
+def test_validity_superuser(mock_data_superuser_complete):
+    superuser = SuperUser(**mock_data_superuser_complete)
+    assert superuser.__dict__ == mock_data_superuser_complete
 
 
 @pytest.mark.parametrize(
@@ -100,10 +90,8 @@ def test_validity_superuser(mock_data_user, mock_data_superuser):
         for item in [-1, "-1", "fffaf", 4.33, "4.33"]
     ],
 )
-def test_invalid_superuser_superuser_id(
-    superuser_id, mock_data_user, mock_data_superuser
-):
-    superuser = SuperUser(**mock_data_user, **mock_data_superuser)
+def test_invalid_superuser_superuser_id(superuser_id, mock_data_superuser_complete):
+    superuser = SuperUser(**mock_data_superuser_complete)
     superuser.superuser_id = superuser_id
 
 
@@ -114,19 +102,18 @@ def test_invalid_superuser_superuser_id(
         for item in ["Admin", "Pippo", "", 33]
     ],
 )
-def test_invalid_superuser_role(role, mock_data_user, mock_data_superuser):
-    superuser = SuperUser(**mock_data_user, **mock_data_superuser)
+def test_invalid_superuser_role(role, mock_data_superuser_complete):
+    superuser = SuperUser(**mock_data_superuser_complete)
     superuser.role = role
 
 
 def test_validity_activity(mock_data_activity):
     activity = Activity(**mock_data_activity)
-    assert "activity_id" in activity.__dict__
-    assert activity.user_id == mock_data_activity["user_id"]
-    assert activity.activity_details == mock_data_activity["activity_details"]
-    assert activity.activity_type == mock_data_activity["activity_type"]
-    assert isinstance(activity.time, datetime)
-    assert activity.time == datetime.fromisoformat(mock_data_activity["time"])
+    for key, value in mock_data_activity.items():
+        if key == "time":
+            assert activity.time == datetime.fromisoformat(mock_data_activity["time"])
+        else:
+            assert activity.__dict__[key] == value
 
 
 @pytest.mark.parametrize(
