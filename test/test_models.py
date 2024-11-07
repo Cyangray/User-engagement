@@ -12,6 +12,11 @@ def test_validity_user(mock_data_user):
     assert user.__dict__ == mock_data_user
 
 
+def test_incomplete_user(mock_incomplete_data_user):
+    with pytest.raises(ValueError):
+        User(**mock_incomplete_data_user)
+
+
 @pytest.mark.parametrize(
     "user_id",
     [
@@ -81,18 +86,6 @@ def test_invalid_user_country(country, mock_data_user):
 def test_validity_superuser(mock_data_superuser_complete):
     superuser = SuperUser(**mock_data_superuser_complete)
     assert superuser.__dict__ == mock_data_superuser_complete
-
-
-@pytest.mark.parametrize(
-    "superuser_id",
-    [
-        pytest.param(item, marks=pytest.mark.xfail)
-        for item in [-1, "-1", "fffaf", 4.33, "4.33"]
-    ],
-)
-def test_invalid_superuser_superuser_id(superuser_id, mock_data_superuser_complete):
-    superuser = SuperUser(**mock_data_superuser_complete)
-    superuser.superuser_id = superuser_id
 
 
 @pytest.mark.parametrize(

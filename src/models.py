@@ -35,8 +35,8 @@ class User(BaseModel, validate_assignment=True):
         description="Username must contain only letters and be at least two characters long.",
     )
     email: EmailStr
-    age: PositiveInt | None
-    country: CountryAlpha2 | None
+    age: PositiveInt | None = None
+    country: CountryAlpha2 | None = None
 
     @field_validator("username", mode="before")
     def username_validator(cls, v):
@@ -58,7 +58,6 @@ class User(BaseModel, validate_assignment=True):
 
 
 class SuperUser(User, validate_assignment=True):
-    superuser_id: PositiveInt
     role: SuperUserRoles
 
 
@@ -72,10 +71,9 @@ class Activity(BaseModel, validate_assignment=True):
     @field_validator("time", mode="before")
     def prevalidate_datetime(cls, entry):
         if isinstance(entry, str):
-            try:
-                assert ("Z" in entry) or ("+00:00" in entry)
+            if ("Z" in entry) or ("+00:00" in entry):
                 return datetime.fromisoformat(entry)
-            except ValueError:
+            else:
                 raise ValueError(
                     'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+00:00" (UTC time)'
                 )
