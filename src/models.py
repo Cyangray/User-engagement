@@ -67,7 +67,7 @@ class Activity(BaseModel, validate_assignment=True):
     time: datetime
     user_id: PositiveInt
     activity_type: ActivityTypes
-    activity_details: str | None
+    activity_details: str | None = None
 
     @field_validator("time", mode="before")
     def prevalidate_datetime(cls, entry):
