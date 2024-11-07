@@ -1,12 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import (
-    PositiveInt,
-    EmailStr,
-    field_validator,
-    model_validator,
-    # Field,
-)
+from pydantic import PositiveInt, EmailStr, field_validator, model_validator
 from typing import Self
 from pydantic_extra_types.country import CountryAlpha2
 
@@ -56,7 +50,6 @@ class User(SQLModel, validate_assignment=True, table=True):
 
 
 class SuperUser(User, validate_assignment=True):
-    superuser_id: PositiveInt = Field(primary_key=True)
     role: SuperUserRoles = Field(index=True)
 
 
@@ -71,10 +64,9 @@ class Activity(SQLModel, validate_assignment=True, table=True):
     @field_validator("time", mode="before")
     def prevalidate_datetime(cls, entry):
         if isinstance(entry, str):
-            try:
-                assert ("Z" in entry) or ("+00:00" in entry)
+            if ("Z" in entry) or ("+00:00" in entry):
                 return datetime.fromisoformat(entry)
-            except ValueError:
+            else:
                 raise ValueError(
                     'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+00:00" (UTC time)'
                 )

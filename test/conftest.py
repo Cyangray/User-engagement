@@ -7,11 +7,6 @@ def user_id_test():
 
 
 @pytest.fixture(scope="session")
-def superuser_id_test():
-    return 1157475173
-
-
-@pytest.fixture(scope="session")
 def activity_id_test():
     return 1157425173
 
@@ -51,8 +46,8 @@ def mock_data_user2(user_id_test):
 
 
 @pytest.fixture(scope="session")
-def mock_data_superuser(superuser_id_test):
-    mock_data_superuser = {"superuser_id": superuser_id_test, "role": "admin"}
+def mock_data_superuser():
+    mock_data_superuser = {"role": "admin"}
     return mock_data_superuser
 
 
@@ -69,9 +64,8 @@ def mock_data_activity(user_id_test, activity_id_test):
 
 
 @pytest.fixture(scope="session")
-def mock_data_superuser_complete(user_id_test, superuser_id_test):
+def mock_data_superuser_complete(user_id_test):
     mock_data_superuser_complete = {
-        "superuser_id": superuser_id_test,
         "user_id": user_id_test,
         "username": "Pippo",
         "email": "eee@bbb.cc",

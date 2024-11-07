@@ -28,11 +28,7 @@ def test_post_user(mock_data_user) -> None:
 def test_post_superuser(mock_data_superuser_complete) -> None:
     response = client.post("/superusers/", params=mock_data_superuser_complete)
     data = response.json()
-    assert "superuser_id" in data
-    excluded_keys = ["superuser_id"]
-    for key, value in mock_data_superuser_complete.items():
-        if key not in excluded_keys:
-            assert data[key] == value
+    assert data == mock_data_superuser_complete
     assert response.status_code == 200
 
 

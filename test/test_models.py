@@ -14,6 +14,11 @@ def test_validity_user(mock_data_user) -> None:
             assert user.__dict__[key] == value
 
 
+def test_incomplete_user(mock_incomplete_data_user):
+    with pytest.raises(ValueError):
+        User(**mock_incomplete_data_user)
+
+
 @pytest.mark.parametrize(
     "user_id",
     [
@@ -86,20 +91,6 @@ def test_validity_superuser(mock_data_superuser_complete) -> None:
     for key, value in mock_data_superuser_complete.items():
         if key not in excluded_keys:
             assert superuser.__dict__[key] == value
-
-
-@pytest.mark.parametrize(
-    "superuser_id",
-    [
-        pytest.param(item, marks=pytest.mark.xfail)
-        for item in [-1, "-1", "fffaf", 4.33, "4.33"]
-    ],
-)
-def test_invalid_superuser_superuser_id(
-    superuser_id, mock_data_superuser_complete
-) -> None:
-    superuser = SuperUser(**mock_data_superuser_complete)
-    superuser.superuser_id = superuser_id
 
 
 @pytest.mark.parametrize(

@@ -85,10 +85,8 @@ def post_superuser(
     age: PositiveInt = None,
     country: CountryAlpha2 = None,
 ) -> SuperUser:
-    superuser_id = short_uuid4_generator()
     superuser = SuperUser(
         user_id=user_id,
-        superuser_id=superuser_id,
         username=username,
         email=email,
         role=role,
