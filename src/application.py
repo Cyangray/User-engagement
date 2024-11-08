@@ -44,7 +44,6 @@ def post_user(
 
 @app.post("/superusers/", response_model=SuperUser)
 def post_superuser(
-    user_id: PositiveInt,
     username: str,
     email: EmailStr,
     role: SuperUserRoles,
