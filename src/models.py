@@ -1,16 +1,17 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from pydantic import (
     BaseModel,
     PositiveInt,
-    StringConstraints,
     EmailStr,
     field_validator,
     model_validator,
+    Field,
 )
-from typing_extensions import Annotated, Optional, Self
-from tools.tools import short_uuid4_generator
+from typing import Self
 from pydantic_extra_types.country import CountryAlpha2
+
+import re
 
 
 class ActivityTypes(str, Enum):
@@ -28,10 +29,24 @@ class SuperUserRoles(str, Enum):
 
 class User(BaseModel, validate_assignment=True):
     user_id: PositiveInt
-    username: Annotated[str, StringConstraints(min_length=2, pattern=r"^[a-zA-Z]*$")]
+    username: str = Field(
+        min_length=2,
+        pattern=r"^[a-zA-Z]*$",
+        description="Username must contain only letters and be at least two characters long.",
+    )
     email: EmailStr
-    age: Optional[PositiveInt]
-    country: Optional[CountryAlpha2]
+    age: PositiveInt | None = None
+    country: CountryAlpha2 | None = None
+
+    @field_validator("username", mode="before")
+    def username_validator(cls, v):
+        pattern = r"^[a-zA-Z]*$"
+        if re.match(pattern, v) and len(v) >= 2:
+            return v
+        else:
+            raise ValueError(
+                "Username must contain only letters and be at least two characters long."
+            )
 
     @model_validator(mode="after")
     def check_if_both_age_and_country(self) -> Self:
@@ -42,13 +57,7 @@ class User(BaseModel, validate_assignment=True):
         return self
 
 
-class SuperUser(BaseModel, validate_assignment=True):
-    user_id: PositiveInt
-    username: Annotated[str, StringConstraints(min_length=2, pattern=r"^[a-zA-Z]*$")]
-    email: EmailStr
-    age: Optional[PositiveInt]
-    country: Optional[CountryAlpha2]
-    superuser_id: PositiveInt
+class SuperUser(User, validate_assignment=True):
     role: SuperUserRoles
 
 
@@ -57,54 +66,16 @@ class Activity(BaseModel, validate_assignment=True):
     time: datetime
     user_id: PositiveInt
     activity_type: ActivityTypes
-    activity_details: str
+    activity_details: str | None = None
 
     @field_validator("time", mode="before")
     def prevalidate_datetime(cls, entry):
-        if isinstance(entry, int):
-            raise ValueError("Integers are not valid datetime entries")
         if isinstance(entry, str):
-            try:
-                print(entry)
+            if ("Z" in entry) or ("+00:00" in entry):
                 return datetime.fromisoformat(entry)
-            except ValueError:
+            else:
                 raise ValueError(
                     'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+00:00" (UTC time)'
                 )
-        return entry
-
-
-def create_user(username, email, age=None, country=None) -> User:
-    user_id = short_uuid4_generator()
-    return User(
-        user_id=user_id, username=username, email=email, age=age, country=country
-    )
-
-
-def create_superuser(
-    user_id, username, email, role: SuperUserRoles, age=None, country=None
-) -> SuperUser:
-    superuser_id = short_uuid4_generator()
-    return SuperUser(
-        superuser_id=superuser_id,
-        role=role,
-        user_id=user_id,
-        username=username,
-        email=email,
-        age=age,
-        country=country,
-    )
-
-
-def create_activity(
-    user_id, activity_type: ActivityTypes, activity_details: str
-) -> Activity:
-    activity_id = short_uuid4_generator()
-    time = datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
-    return Activity(
-        activity_id=activity_id,
-        activity_type=activity_type,
-        activity_details=activity_details,
-        time=time,
-        user_id=user_id,
-    )
+        else:
+            raise ValueError("Input format for time attribute should be a str.")
