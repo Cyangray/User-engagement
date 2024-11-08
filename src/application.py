@@ -51,6 +51,7 @@ def post_superuser(
     age: PositiveInt = None,
     country: CountryAlpha2 = None,
 ) -> SuperUser:
+    user_id = short_uuid4_generator()
     superuser = SuperUser(
         user_id=user_id,
         username=username,
@@ -61,6 +62,9 @@ def post_superuser(
     )
     if superuser.email in emails_db:
         raise HTTPException(status_code=400, detail="Email already registered")
+    users_id_db.append(superuser.user_id)
+    users_db.append(superuser)
+    emails_db.append(superuser.email)
     superusers_id_db.append(superuser.user_id)
     superusers_db.append(superuser)
     return superuser
@@ -81,8 +85,6 @@ async def post_activity(
         activity_type=activity_type,
         activity_details=activity_details,
     )
-    print(user_id)
-    print(users_id_db)
     if activity.user_id not in users_id_db:
         raise HTTPException(status_code=404, detail="User ID not found")
     activities_id_db.append(activity.activity_id)
