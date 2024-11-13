@@ -12,13 +12,10 @@ db_connection_config = {
 }
 
 
-try:
-    conn = psycopg.connect(**db_connection_config, autocommit=True)
+with psycopg.connect(**db_connection_config, autocommit=True) as conn:
     with conn.cursor() as cur:
         cur.execute("DROP DATABASE IF EXISTS testdb")
         cur.execute("CREATE DATABASE testdb")
-finally:
-    conn.close()
 
 
 @pytest.fixture(scope="session")
