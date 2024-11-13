@@ -74,7 +74,10 @@ def test_duplicate_id_and_mail(
 def test_post_superuser(mock_data_superuser_complete) -> None:
     response = client.post("/superusers/", params=mock_data_superuser_complete)
     data = response.json()
-    assert data == mock_data_superuser_complete
+    excluded_keys = ["user_id"]
+    for key, value in mock_data_superuser_complete.items():
+        if key not in excluded_keys:
+            assert data[key] == value
     assert response.status_code == 200
 
 

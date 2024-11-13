@@ -54,13 +54,13 @@ def post_user(
 
 @app.post("/superusers/")
 def post_superuser(
-    user_id: PositiveInt,
     username: str,
     email: EmailStr,
     role: SuperUserRoles,
     age: PositiveInt = None,
     country: CountryAlpha2 = None,
 ) -> SuperUser:
+    user_id = short_uuid4_generator()
     superuser = SuperUser(
         user_id=user_id,
         username=username,
