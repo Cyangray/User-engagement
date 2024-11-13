@@ -31,7 +31,7 @@ def post_user(
     email: EmailStr,
     age: PositiveInt = None,
     country: CountryAlpha2 = None,
-    connection_config=None,
+    connection_config: str | None = None,
 ) -> User:
     if connection_config is None:
         connection_config = db_connection_config
@@ -78,7 +78,7 @@ async def post_activity(
     user_id: PositiveInt,
     activity_type: ActivityTypes,
     activity_details: str = None,
-    connection_config=None,
+    connection_config: str | None = None,
 ) -> Activity:
     if connection_config is None:
         connection_config = db_connection_config
@@ -101,7 +101,11 @@ async def post_activity(
 
 
 @app.get("/activities/")
-async def read_activities_by_userid(user_id: PositiveInt, connection_config) -> list:
+async def read_activities_by_userid(
+    user_id: PositiveInt, connection_config: str | None
+) -> list[dict]:
+    if connection_config is None:
+        connection_config = db_connection_config
     with psycopg.connect(connection_config, autocommit=True) as conn:
         with conn.cursor() as cur:
             user_ids = retrieve_items("user_id", "users", cur)
