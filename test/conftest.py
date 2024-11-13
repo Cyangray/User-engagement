@@ -1,4 +1,53 @@
 import pytest
+import psycopg
+from dotenv import dotenv_values
+
+# create test database
+env_values = dotenv_values("db/.env")
+db_connection_config = {
+    "host": "localhost",
+    "dbname": env_values.get("POSTGRES_DB"),
+    "user": env_values.get("POSTGRES_USER"),
+    "password": env_values.get("POSTGRES_PASSWORD"),
+}
+
+
+try:
+    conn = psycopg.connect(**db_connection_config, autocommit=True)
+    with conn.cursor() as cur:
+        cur.execute("DROP DATABASE IF EXISTS testdb")
+        cur.execute("CREATE DATABASE testdb")
+finally:
+    conn.close()
+
+
+@pytest.fixture(scope="session")
+def db_test_connection_config():
+    env_values = dotenv_values("db/.env")
+    return f"host=localhost dbname=testdb user={env_values.get("POSTGRES_USER")} password={env_values.get("POSTGRES_PASSWORD")}"
+
+
+@pytest.fixture(scope="session")
+def create_test_tables():
+    commands = """
+                DROP TABLE IF EXISTS users;
+                DROP TABLE IF EXISTS activities;
+                CREATE TABLE users (
+                user_id INT PRIMARY KEY,
+                username TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                age SMALLINT,
+                country VARCHAR(2)
+                );
+                CREATE TABLE activities (
+                activity_id INT PRIMARY KEY,
+                user_id INT,
+                time TIMESTAMPTZ,
+                activity_type TEXT,
+                activity_details TEXT
+                );
+                """
+    return commands
 
 
 @pytest.fixture(scope="session")
@@ -58,7 +107,7 @@ def mock_data_activity(user_id_test, activity_id_test):
         "activity_id": activity_id_test,
         "time": "2020-04-23T12:00:01Z",
         "activity_type": "login",
-        "activity_details": "First login of the day",
+        "activity_details": "This is a test activity",
     }
     return mock_data_activity
 

@@ -1,12 +1,10 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import PositiveInt, EmailStr, field_validator, model_validator
+from pydantic import PositiveInt, EmailStr, field_validator, model_validator, BaseModel
 from typing import Self
 from pydantic_extra_types.country import CountryAlpha2
 
 import re
-
-from sqlmodel import SQLModel, Field
 
 
 class ActivityTypes(str, Enum):
@@ -22,13 +20,12 @@ class SuperUserRoles(str, Enum):
     support = "support"
 
 
-class User(SQLModel, validate_assignment=True, table=True):
-    __tablename__ = "users"
-    user_id: PositiveInt = Field(primary_key=True)
-    username: str = Field(min_length=2, index=True)
-    email: EmailStr = Field(index=True)
-    age: PositiveInt | None = Field(default=None, index=True)
-    country: CountryAlpha2 | None = Field(default=None, index=True)
+class User(BaseModel, validate_assignment=True):
+    user_id: PositiveInt
+    username: str
+    email: EmailStr
+    age: PositiveInt | None = None
+    country: CountryAlpha2 | None = None
 
     @field_validator("username", mode="before")
     def username_validator(cls, v):
@@ -50,16 +47,15 @@ class User(SQLModel, validate_assignment=True, table=True):
 
 
 class SuperUser(User, validate_assignment=True):
-    role: SuperUserRoles = Field(index=True)
+    role: SuperUserRoles
 
 
-class Activity(SQLModel, validate_assignment=True, table=True):
-    __tablename__ = "activities"
-    activity_id: PositiveInt = Field(primary_key=True)
-    time: datetime = Field(index=True)
-    user_id: PositiveInt = Field(index=True)
-    activity_type: ActivityTypes = Field(index=True)
-    activity_details: str | None = Field(default=None, index=True)
+class Activity(BaseModel, validate_assignment=True):
+    activity_id: PositiveInt
+    time: datetime
+    user_id: PositiveInt
+    activity_type: ActivityTypes
+    activity_details: str | None = None
 
     @field_validator("time", mode="before")
     def prevalidate_datetime(cls, entry):

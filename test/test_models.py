@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from src.models import (
     User,
     SuperUser,
@@ -107,9 +109,10 @@ def test_invalid_superuser_role(role, mock_data_superuser_complete) -> None:
 
 def test_validity_activity(mock_data_activity) -> None:
     activity = Activity(**mock_data_activity)
-    excluded_keys = ["_sa_instance_state"]
     for key, value in mock_data_activity.items():
-        if key not in excluded_keys:
+        if key == "time":
+            assert activity.time == datetime.fromisoformat(mock_data_activity["time"])
+        else:
             assert activity.__dict__[key] == value
 
 

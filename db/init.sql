@@ -1,7 +1,7 @@
 CREATE TABLE users (
     user_id INT PRIMARY KEY,
     username TEXT NOT NULL,
-    email TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
     age SMALLINT,
     country VARCHAR(2)
 );
