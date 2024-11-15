@@ -3,7 +3,7 @@ import psycopg
 from dotenv import dotenv_values
 
 # create test database
-env_values = dotenv_values("db/.env")
+env_values = dotenv_values(".env")
 db_connection_config = {
     "host": "localhost",
     "dbname": env_values.get("POSTGRES_DB"),
@@ -20,7 +20,7 @@ with psycopg.connect(**db_connection_config, autocommit=True) as conn:
 
 @pytest.fixture(scope="session")
 def db_test_connection_config():
-    env_values = dotenv_values("db/.env")
+    env_values = dotenv_values(".env")
     return f"host=localhost dbname=testdb user={env_values.get("POSTGRES_USER")} password={env_values.get("POSTGRES_PASSWORD")}"
 
 

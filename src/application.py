@@ -8,7 +8,7 @@ from tools.db_operations import retrieve_items, insert_item
 from tools.tools import short_uuid4_generator
 import psycopg
 
-env_values = dotenv_values("db/.env")
+env_values = dotenv_values(".env")
 
 db_connection_config = {
     "host": "localhost",

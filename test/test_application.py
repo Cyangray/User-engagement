@@ -16,7 +16,7 @@ def test_client_startup() -> None:
 
 
 def test_db_connection():
-    env_values = dotenv_values("db/.env")
+    env_values = dotenv_values(".env")
     db_connection_config = {
         "host": "localhost",
         "dbname": env_values.get("POSTGRES_DB"),
