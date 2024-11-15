@@ -52,7 +52,7 @@ def test_post_user(mock_data_user, create_test_tables, client_test) -> None:
     assert response.status_code == 200
 
 
-def test_duplicate_id_and_mail(mock_data_user, create_test_tables) -> None:
+def test_duplicate_id(mock_data_user, create_test_tables) -> None:
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -65,11 +65,19 @@ def test_duplicate_id_and_mail(mock_data_user, create_test_tables) -> None:
             user2.email = "ddd@eee.ff"
             insert_item(user2, "users", cur)
 
+
+def test_duplicate_email(mock_data_user, create_test_tables, client_test) -> None:
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        cur.execute(create_test_tables)
+        user1 = User(**mock_data_user)
+        user2 = User(**mock_data_user)
+        insert_item(user1, "users", cur)
         # test for duplicate mail
-        with pytest.raises(Exception):
-            user2.user_id = user1.user_id - 1
-            user2.email = user1.email
-            insert_item(user2, "users", cur)
+
+        user2.user_id = user1.user_id - 1
+        response = client_test.post("/users/", params={**user2.__dict__})
+        assert response.status_code == 400
 
 
 def test_post_superuser(mock_data_superuser_complete, client_test) -> None:

@@ -8,7 +8,6 @@ from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
 from tools.db_operations import retrieve_items, insert_item
 from tools.tools import short_uuid4_generator
 from tools.ConnectionManager import get_db
-import psycopg
 
 
 @asynccontextmanager
@@ -42,14 +41,12 @@ def post_user(
         user_id=user_id, username=username, email=email, age=age, country=country
     )
     conn = app.state.connection_manager.connection
-    # Catch the repeated email error with the API, not the database
     with conn.cursor() as cur:
-        try:
-            insert_item(user, "users", cur)
-        except psycopg.errors.UniqueViolation:  # TODO: should I let SQL raise the error, since the email column is UNIQUE, or should
-            # I let FastAPI handle it as a HTTPException? In this last case one obtains the 400
-            # status code, which can be tested for. Test works now, otherwise.
+        emails = retrieve_items("email", "users", cur)
+        if email in emails:
             raise HTTPException(status_code=400, detail="Email already registered")
+        else:
+            insert_item(user, "users", cur)
 
     return user
 
