@@ -42,6 +42,7 @@ def post_user(
         user_id=user_id, username=username, email=email, age=age, country=country
     )
     conn = app.state.connection_manager.connection
+    # Catch the repeated email error with the API, not the database
     with conn.cursor() as cur:
         try:
             insert_item(user, "users", cur)

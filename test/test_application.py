@@ -4,6 +4,7 @@ from src.application import app
 import psycopg
 from src.models import User, Activity
 from tools.db_operations import insert_item
+import os
 
 
 def test_client_startup(client_test) -> None:
@@ -13,13 +14,20 @@ def test_client_startup(client_test) -> None:
 
 
 def test_db_connection():
-    env_values = dotenv_values(".env")
+    env_path = "db/.env"
+    if os.path.exists(env_path):
+        env_values = dotenv_values(env_path)
+        env_variables = ["POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD"]
+        for env_variable in env_variables:
+            os.environ[env_variable] = env_values.get(env_variable)
+
     db_connection_config = {
         "host": "localhost",
-        "dbname": env_values.get("POSTGRES_DB"),
-        "user": env_values.get("POSTGRES_USER"),
-        "password": env_values.get("POSTGRES_PASSWORD"),
+        "dbname": os.getenv("POSTGRES_DB"),
+        "user": os.getenv("POSTGRES_USER"),
+        "password": os.getenv("POSTGRES_PASSWORD"),
     }
+
     try:
         conn = psycopg.connect(**db_connection_config, autocommit=True)
     finally:

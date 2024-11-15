@@ -5,6 +5,7 @@ from dotenv import dotenv_values
 from src.application import app
 from tools.ConnectionManager import ConnectionManager
 from fastapi.testclient import TestClient
+import os
 
 
 @pytest.fixture(scope="session")
@@ -13,19 +14,26 @@ def db_connection():
     Establishes odbc connection for the whole session
     :return: pyodbc connection class
     """
-    env_values = dotenv_values("db/.env")
+    env_path = "db/.env"
+    if os.path.exists(env_path):
+        env_values = dotenv_values(env_path)
+        env_variables = ["POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD"]
+        for env_variable in env_variables:
+            os.environ[env_variable] = env_values.get(env_variable)
+
     db_connection_config = {
         "host": "localhost",
-        "dbname": env_values.get("POSTGRES_DB"),
-        "user": env_values.get("POSTGRES_USER"),
-        "password": env_values.get("POSTGRES_PASSWORD"),
+        "dbname": os.getenv("POSTGRES_DB"),
+        "user": os.getenv("POSTGRES_USER"),
+        "password": os.getenv("POSTGRES_PASSWORD"),
     }
     testdb_connection_config = {
         "host": "localhost",
         "dbname": "testdb",
-        "user": env_values.get("POSTGRES_USER"),
-        "password": env_values.get("POSTGRES_PASSWORD"),
+        "user": os.getenv("POSTGRES_USER"),
+        "password": os.getenv("POSTGRES_PASSWORD"),
     }
+
     with psycopg.connect(**db_connection_config, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute("DROP DATABASE IF EXISTS testdb")
