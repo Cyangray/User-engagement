@@ -2,26 +2,47 @@ import pytest
 import psycopg
 from dotenv import dotenv_values
 
-# create test database
-env_values = dotenv_values("db/.env")
-db_connection_config = {
-    "host": "localhost",
-    "dbname": env_values.get("POSTGRES_DB"),
-    "user": env_values.get("POSTGRES_USER"),
-    "password": env_values.get("POSTGRES_PASSWORD"),
-}
-
-
-with psycopg.connect(**db_connection_config, autocommit=True) as conn:
-    with conn.cursor() as cur:
-        cur.execute("DROP DATABASE IF EXISTS testdb")
-        cur.execute("CREATE DATABASE testdb")
+from src.application import app
+from tools.ConnectionManager import ConnectionManager
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="session")
-def db_test_connection_config():
+def db_connection():
+    """
+    Establishes odbc connection for the whole session
+    :return: pyodbc connection class
+    """
     env_values = dotenv_values("db/.env")
-    return f"host=localhost dbname=testdb user={env_values.get("POSTGRES_USER")} password={env_values.get("POSTGRES_PASSWORD")}"
+    db_connection_config = {
+        "host": "localhost",
+        "dbname": env_values.get("POSTGRES_DB"),
+        "user": env_values.get("POSTGRES_USER"),
+        "password": env_values.get("POSTGRES_PASSWORD"),
+    }
+    testdb_connection_config = {
+        "host": "localhost",
+        "dbname": "testdb",
+        "user": env_values.get("POSTGRES_USER"),
+        "password": env_values.get("POSTGRES_PASSWORD"),
+    }
+    with psycopg.connect(**db_connection_config, autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute("DROP DATABASE IF EXISTS testdb")
+            cur.execute("CREATE DATABASE testdb")
+
+    connection_manager = ConnectionManager(testdb_connection_config)
+    connection_manager.connect()
+    connection_manager.connection.autocommit = True
+
+    return connection_manager
+
+
+@pytest.fixture(scope="session")
+def client_test(db_connection):
+    client_ = TestClient(app)
+    app.state.connection_manager = db_connection
+    return client_
 
 
 @pytest.fixture(scope="session")
@@ -83,7 +104,7 @@ def mock_data_user(user_id_test):
 def mock_data_user2(user_id_test):
     mock_data_user2 = {
         "user_id": user_id_test + 1,
-        "username": "Pippo2",
+        "username": "Pippolino",
         "email": "aaa2@bbb.cc",
         "age": 24,
         "country": "FR",
