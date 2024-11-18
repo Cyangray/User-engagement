@@ -26,6 +26,7 @@ RUN poetry install --no-interaction --no-ansi
 
 
 COPY ./src /code/src
+COPY ./tools /code/tools
 
 
 CMD ["fastapi", "run", "src/application.py", "--port", "80"]

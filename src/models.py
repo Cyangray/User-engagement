@@ -1,13 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import (
-    BaseModel,
-    PositiveInt,
-    EmailStr,
-    field_validator,
-    model_validator,
-    Field,
-)
+from pydantic import PositiveInt, EmailStr, field_validator, model_validator, BaseModel
 from typing import Self
 from pydantic_extra_types.country import CountryAlpha2
 
@@ -29,11 +22,7 @@ class SuperUserRoles(str, Enum):
 
 class User(BaseModel, validate_assignment=True):
     user_id: PositiveInt
-    username: str = Field(
-        min_length=2,
-        pattern=r"^[a-zA-Z]*$",
-        description="Username must contain only letters and be at least two characters long.",
-    )
+    username: str
     email: EmailStr
     age: PositiveInt | None = None
     country: CountryAlpha2 | None = None

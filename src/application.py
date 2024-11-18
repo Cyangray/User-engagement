@@ -1,12 +1,26 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
 from pydantic import PositiveInt, EmailStr
 from pydantic_extra_types.country import CountryAlpha2
-
 from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
+from tools.db_operations import retrieve_items, insert_item
 from tools.tools import short_uuid4_generator
+from tools.ConnectionManager import get_db
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    # At startup - start connection to the SQL server
+    connection_manager = get_db()
+    application.state.connection_manager = connection_manager
+    yield
+    # At shutdown - close the connection
+    connection_manager.disconnect()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/", response_class=PlainTextResponse)
@@ -14,16 +28,7 @@ async def root():
     return "Hello, I'm good!"
 
 
-emails_db = []
-users_db = []
-superusers_db = []
-activities_db = []
-users_id_db = []
-superusers_id_db = []
-activities_id_db = []
-
-
-@app.post("/users/", response_model=User)
+@app.post("/users/")
 def post_user(
     username: str,
     email: EmailStr,
@@ -31,18 +36,22 @@ def post_user(
     country: CountryAlpha2 = None,
 ) -> User:
     user_id = short_uuid4_generator()
+
     user = User(
         user_id=user_id, username=username, email=email, age=age, country=country
     )
-    if user.email in emails_db:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    users_id_db.append(user.user_id)
-    users_db.append(user)
-    emails_db.append(user.email)
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        emails = retrieve_items("email", "users", cur)
+        if email in emails:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        else:
+            insert_item(user, "users", cur)
+
     return user
 
 
-@app.post("/superusers/", response_model=SuperUser)
+@app.post("/superusers/")
 def post_superuser(
     username: str,
     email: EmailStr,
@@ -59,17 +68,10 @@ def post_superuser(
         age=age,
         country=country,
     )
-    if superuser.email in emails_db:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    users_id_db.append(superuser.user_id)
-    users_db.append(superuser)
-    emails_db.append(superuser.email)
-    superusers_id_db.append(superuser.user_id)
-    superusers_db.append(superuser)
     return superuser
 
 
-@app.post("/activities/", response_model=Activity)
+@app.post("/activities/")
 async def post_activity(
     time: str,
     user_id: PositiveInt,
@@ -84,19 +86,34 @@ async def post_activity(
         activity_type=activity_type,
         activity_details=activity_details,
     )
-    if activity.user_id not in users_id_db:
-        raise HTTPException(status_code=404, detail="User ID not found")
-    activities_id_db.append(activity.activity_id)
-    activities_db.append(activity)
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        user_ids = retrieve_items("user_id", "users", cur)
+        if activity.user_id not in user_ids:
+            raise HTTPException(status_code=404, detail="User ID not found")
+        insert_item(activity, "activities", cur)
     return activity
 
 
-@app.get("/activities/", response_model=list[Activity])
-async def read_activities_by_userid(user_id: PositiveInt) -> list[Activity]:
-    if user_id not in users_id_db:
-        raise HTTPException(status_code=404, detail="User ID not found.")
-    if user_id not in [item.user_id for item in activities_db]:
-        raise HTTPException(
-            status_code=404, detail=f"No activities by {user_id=} found."
-        )
-    return [item for item in activities_db if item.user_id == user_id]
+@app.get("/activities/")
+async def read_activities_by_userid(
+    user_id: PositiveInt,
+) -> list[dict]:
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        user_ids = retrieve_items("user_id", "users", cur)
+        if user_id not in user_ids:
+            raise HTTPException(status_code=404, detail="User ID not found.")
+        user_id_activities = retrieve_items("user_id", "activities", cur)
+        if user_id not in user_id_activities:
+            raise HTTPException(
+                status_code=404, detail=f"No activities by {user_id=} found."
+            )
+
+        query = f"""SELECT * FROM activities WHERE user_id = {user_id}"""
+        act_list = cur.execute(query, {"user_id": user_id}).fetchall()
+        act_list = [
+            dict((cur.description[i][0], value) for i, value in enumerate(row))
+            for row in act_list
+        ]
+    return act_list
