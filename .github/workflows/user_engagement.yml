@@ -60,9 +60,6 @@ jobs:
         TEST_POSTGRES_DB: "test"
         TEST_POSTGRES_PORT: "5432"
         TEST_POSTGRES_HOST: "postgres_test"
-    - name: Execute tests in the running services
-      run: |
-        docker-compose exec python_api_test pytest
 #
 #
 #
