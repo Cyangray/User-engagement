@@ -10,7 +10,7 @@ COPY ./pyproject.toml /code/pyproject.toml
 COPY ./poetry.lock /code/poetry.lock
 RUN poetry config virtualenvs.create false
 
-
+# Stage 1: Development
 FROM base AS dev
 RUN poetry install --no-interaction --no-ansi
 COPY . /code

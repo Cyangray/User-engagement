@@ -13,9 +13,10 @@ def create_insert_query(obj: BaseModel, table: str) -> str:
     return query
 
 
-def insert_item(obj: BaseModel, table: str, cur: psycopg.Cursor) -> psycopg.Cursor:
+def insert_item(obj: BaseModel, table: str, cur: psycopg.Cursor) -> None:
     query = create_insert_query(obj, table)
-    return cur.execute(query, obj.__dict__)
+    cur.execute(query, obj.__dict__)
+    return None
 
 
 def create_retrieve_query(key: str, table: str, where: str | None) -> str:
