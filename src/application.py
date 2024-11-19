@@ -12,6 +12,10 @@ from tools.ConnectionManager import get_db
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
+    """
+    lifespan function that yields a connection to the database that lasts until the code is shut down.
+    :param application: FastAPI object, the app.
+    """
     # At startup - start connection to the SQL server
     connection_manager = get_db()
     application.state.connection_manager = connection_manager
@@ -25,6 +29,10 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/", response_class=PlainTextResponse)
 async def root():
+    """
+    Main page text, that shows that the client is connected to the API.
+    :return: hello world string
+    """
     return "Hello, I'm good!"
 
 
@@ -35,8 +43,16 @@ def post_user(
     age: PositiveInt = None,
     country: CountryAlpha2 = None,
 ) -> User:
-    user_id = short_uuid4_generator()
+    """
+    Function that posts a user to the API, and adds it to the database. A check is done on whether a user with the same mail is present in the database. Although both age and country are optional, at least one of those must be provided, otherwise a ValidationError is thrown. It returns the user object.
+    :param username: string. Username. Only letters, more than two.
+    :param email: string. Email. Must be in the form aaa@bbb.ccc.
+    :param age: integer (optional). age in years.
+    :param country: string (optional). Country alpha-2 code. Two capitalized letters. check https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements if in doubt.
+    :return: User object.
+    """
 
+    user_id = short_uuid4_generator()
     user = User(
         user_id=user_id, username=username, email=email, age=age, country=country
     )
@@ -59,6 +75,15 @@ def post_superuser(
     age: PositiveInt = None,
     country: CountryAlpha2 = None,
 ) -> SuperUser:
+    """
+    Function that posts a superuser to the API. A check is done on whether a user with the same mail is present in the database. It returns the superuser object.
+    :param username: string. Username. Only letters, more than two.
+    :param email: string. Email. Must be in the form aaa@bbb.ccc.
+    :param age: integer. age in years.
+    :param country: string. Country alpha-2 code. Two capitalized letters. check https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements if in doubt.
+    :param role: string. Can only be "admin", "moderator" or "support".
+    :return: SuperUser object.
+    """
     user_id = short_uuid4_generator()
     superuser = SuperUser(
         user_id=user_id,
@@ -78,6 +103,14 @@ async def post_activity(
     activity_type: ActivityTypes,
     activity_details: str = None,
 ) -> Activity:
+    """
+    Posts an activity to the API, and adds it to the database. first, it checks if the provided userID exists. It returns an Activity object.
+    :param time: datetime object, or string. The time the activity took place. If string, it must be in the form YYYY-MM-DDTHH:MM:SSZ.
+    :param user_id: integer. The user_id of the user doing the action.
+    :param activity_type: string. Can only be "click", "login", "logout" and "purchase".
+    :param activity_details: string. Details on the activity.
+    :return:
+    """
     activity_id = short_uuid4_generator()
     activity = Activity(
         activity_id=activity_id,
@@ -99,6 +132,11 @@ async def post_activity(
 async def read_activities_by_userid(
     user_id: PositiveInt,
 ) -> list[dict]:
+    """
+    Function returning a list of activities filtered by user_id.
+    :param user_id: integer. user_id of the user we want to filter for activities.
+    :return: list of Activity objects.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         user_ids = retrieve_items("user_id", "users", cur)

@@ -33,6 +33,8 @@ def db_connection():
         "password": os.getenv("TEST_POSTGRES_PASSWORD"),
         "port": os.getenv("TEST_POSTGRES_PORT"),
     }
+    print(os.environ)
+    print(testdb_connection_config)
 
     connection_manager = ConnectionManager(testdb_connection_config)
     connection_manager.connect()
@@ -43,6 +45,11 @@ def db_connection():
 
 @pytest.fixture(scope="session")
 def client_test(db_connection):
+    """
+    Establishes a connection between the client and the API.
+    :param db_connection: fixture
+    :return: the client
+    """
     client_ = TestClient(app)
     app.state.connection_manager = db_connection
     return client_
@@ -50,6 +57,10 @@ def client_test(db_connection):
 
 @pytest.fixture(scope="session")
 def create_test_tables():
+    """
+    Helper fixture saving the command to erase and rebuild the SQL tables to be used in tests.
+    :return: a list of SQL commands.
+    """
     commands = """
                 DROP TABLE IF EXISTS users;
                 DROP TABLE IF EXISTS activities;
@@ -73,16 +84,25 @@ def create_test_tables():
 
 @pytest.fixture(scope="session")
 def user_id_test():
+    """
+    Fixture always returning the same user_id for tests.
+    """
     return 164280569
 
 
 @pytest.fixture(scope="session")
 def activity_id_test():
+    """
+    Fixture always returning the same activity_id for tests.
+    """
     return 1157425173
 
 
 @pytest.fixture(scope="session")
 def mock_incomplete_data_user(user_id_test):
+    """
+    Fixture returning an incomplete test user to be used in failtests.
+    """
     mock_incomplete_data_user = {
         "user_id": user_id_test,
         "username": "Pippo",
@@ -93,6 +113,9 @@ def mock_incomplete_data_user(user_id_test):
 
 @pytest.fixture(scope="session")
 def mock_data_user(user_id_test):
+    """
+    Fixture returning a test user to be used in tests.
+    """
     mock_data_user = {
         "user_id": user_id_test,
         "username": "Pippo",
@@ -105,6 +128,9 @@ def mock_data_user(user_id_test):
 
 @pytest.fixture(scope="session")
 def mock_data_user2(user_id_test):
+    """
+    Fixture returning a second test user to be used in tests.
+    """
     mock_data_user2 = {
         "user_id": user_id_test + 1,
         "username": "Pippolino",
@@ -117,12 +143,18 @@ def mock_data_user2(user_id_test):
 
 @pytest.fixture(scope="session")
 def mock_data_superuser():
+    """
+    Fixture returning a test superuser to be used in tests.
+    """
     mock_data_superuser = {"role": "admin"}
     return mock_data_superuser
 
 
 @pytest.fixture(scope="session")
 def mock_data_activity(user_id_test, activity_id_test):
+    """
+    Fixture returning a test activity to be used in tests. The user_id is linked to the first test_user.
+    """
     mock_data_activity = {
         "user_id": user_id_test,
         "activity_id": activity_id_test,
@@ -135,6 +167,9 @@ def mock_data_activity(user_id_test, activity_id_test):
 
 @pytest.fixture(scope="session")
 def mock_data_superuser_complete(user_id_test):
+    """
+    Fixture returning a test superuser to be used in tests.
+    """
     mock_data_superuser_complete = {
         "user_id": user_id_test,
         "username": "Pippo",

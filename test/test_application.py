@@ -5,12 +5,19 @@ from tools.db_operations import insert_item
 
 
 def test_client_startup(client_test) -> None:
+    """
+    Tests the startup of the client.
+    :param client_test: The (test) client
+    """
     response = client_test.get("/")
     assert response.status_code == 200
     assert response.text == "Hello, I'm good!"
 
 
 # def test_db_connection():
+#     """
+#     tests that connection to the database is established.
+#     """
 #     db_connection_config = {
 #         "host": os.getenv("POSTGRES_HOST"),
 #         "dbname": os.getenv("POSTGRES_DB"),
@@ -27,6 +34,9 @@ def test_client_startup(client_test) -> None:
 
 
 def test_post_user(mock_data_user, create_test_tables, client_test) -> None:
+    """
+    tests that a valid user data is posted to the API, and returns status_code 200.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -45,6 +55,9 @@ def test_post_user(mock_data_user, create_test_tables, client_test) -> None:
 
 
 def test_duplicate_id(mock_data_user, create_test_tables) -> None:
+    """
+    Tests that a second user with the same user_id and different email as the first one, will not be passed to the database.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -57,6 +70,9 @@ def test_duplicate_id(mock_data_user, create_test_tables) -> None:
 
 
 def test_duplicate_email(mock_data_user, create_test_tables, client_test) -> None:
+    """
+    Tests that a second user with the same email and different user_id as the first one, will not be passed to the API or the database.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -69,6 +85,9 @@ def test_duplicate_email(mock_data_user, create_test_tables, client_test) -> Non
 
 
 def test_post_superuser(mock_data_superuser_complete, client_test) -> None:
+    """
+    Tests that a valid superuser will be passed to the API.
+    """
     response = client_test.post("/superusers/", params=mock_data_superuser_complete)
     data = response.json()
     excluded_keys = ["user_id"]
@@ -81,6 +100,9 @@ def test_post_superuser(mock_data_superuser_complete, client_test) -> None:
 def test_post_activity(
     mock_data_user, mock_data_activity, create_test_tables, client_test
 ) -> None:
+    """
+    Tests that a valid activity will be passed to the API.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -103,6 +125,9 @@ def test_post_activity(
 def test_post_activity_no_userid(
     mock_data_user, mock_data_activity, create_test_tables, client_test
 ) -> None:
+    """
+    Failtests that an error is raised if one tries to post an activity with a user_id not present in the database.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -126,6 +151,9 @@ def test_post_activity_no_userid(
 def test_filter_activities_by_user_id(
     mock_data_user, mock_data_activity, create_test_tables, client_test, mock_data_user2
 ) -> None:
+    """
+    Tests that the read_activities_by_userid works given valid input.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -152,6 +180,9 @@ def test_filter_activities_by_user_id(
 def test_fail_filter_activities_user_id_not_found(
     mock_data_user, mock_data_activity, create_test_tables, client_test
 ) -> None:
+    """
+    Failtests that the read_activities_by_userid function in application.py will throw an error if there is no userid matching the query.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
