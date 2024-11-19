@@ -13,14 +13,18 @@ RUN poetry config virtualenvs.create false
 # Stage 1: Development
 FROM base AS dev
 RUN poetry install --no-interaction --no-ansi
-COPY . /code
+COPY src/ /code/src/
+COPY tools/ /code/tools/
+COPY test/ /code/test/
 CMD ["fastapi", "run", "src/application.py", "--port", "80"]
 
 
 # Stage 2: Testing
 FROM base AS test
 RUN poetry install --no-interaction --no-ansi
-COPY . /code
+COPY src/ /code/src/
+COPY tools/ /code/tools/
+COPY test/ /code/test/
 CMD ["pytest", "--maxfail=1", "--disable-warnings", "-vs"]
 
 
