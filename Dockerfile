@@ -20,14 +20,13 @@ CMD ["fastapi", "run", "src/application.py", "--port", "80"]
 # Stage 2: Testing
 FROM base AS test
 RUN poetry install --no-interaction --no-ansi
-COPY . ./code
-CMD ["pytest", "--maxfail=1", "--disable-warnings", "-v"]
+COPY . /code
+CMD ["pytest", "--maxfail=1", "--disable-warnings", "-vs"]
 
 
 # Stage 3: Production
 FROM base AS prod
 RUN poetry install --no-interaction --no-ansi --without test
-COPY ./src ./code/src
-COPY ./tools ./code/tools
-COPY ./.env ./code/.env
+COPY src/ /code/src/
+COPY tools/ /code/tools/
 CMD ["fastapi", "run", "src/application.py", "--port", "80"]

@@ -1,5 +1,4 @@
 import pytest
-import psycopg
 from dotenv import dotenv_values
 from src.application import app
 from tools.ConnectionManager import ConnectionManager
@@ -10,33 +9,30 @@ import os
 @pytest.fixture(scope="session")
 def db_connection():
     """
-    Establishes odbc connection for the whole session
-    :return: pyodbc connection class
+    Establishes postgresql connection for the whole session
+    :return: Connection_Manager object
     """
     env_path = ".env"
     if os.path.exists(env_path):
+        print("here")
         env_values = dotenv_values(env_path)
-        env_variables = ["POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD"]
+        env_variables = [
+            "TEST_POSTGRES_USER",
+            "TEST_POSTGRES_DB",
+            "TEST_POSTGRES_PASSWORD",
+            "TEST_POSTGRES_PORT",
+            "TEST_POSTGRES_HOST",
+        ]
         for env_variable in env_variables:
             os.environ[env_variable] = env_values.get(env_variable)
 
-    db_connection_config = {
-        "host": "localhost",
-        "dbname": os.getenv("POSTGRES_DB"),
-        "user": os.getenv("POSTGRES_USER"),
-        "password": os.getenv("POSTGRES_PASSWORD"),
-    }
     testdb_connection_config = {
-        "host": "localhost",
-        "dbname": "testdb",
-        "user": os.getenv("POSTGRES_USER"),
-        "password": os.getenv("POSTGRES_PASSWORD"),
+        "host": os.getenv("TEST_POSTGRES_HOST"),
+        "dbname": os.getenv("TEST_POSTGRES_DB"),
+        "user": os.getenv("TEST_POSTGRES_USER"),
+        "password": os.getenv("TEST_POSTGRES_PASSWORD"),
+        "port": os.getenv("TEST_POSTGRES_PORT"),
     }
-
-    with psycopg.connect(**db_connection_config, autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute("DROP DATABASE IF EXISTS testdb")
-            cur.execute("CREATE DATABASE testdb")
 
     connection_manager = ConnectionManager(testdb_connection_config)
     connection_manager.connect()

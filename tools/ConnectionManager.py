@@ -1,20 +1,20 @@
-from dotenv import dotenv_values
 import psycopg
 
 import os
 
-env_path = "db/.env"
-if os.path.exists(env_path):
-    env_values = dotenv_values(env_path)
-    env_variables = ["POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD"]
-    for env_variable in env_variables:
-        os.environ[env_variable] = env_values.get(env_variable)
+# env_path = ".env"
+# if os.path.exists(env_path):
+#     env_values = dotenv_values(env_path)
+#     env_variables = ["POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD", "POSTGRES_PORT"]
+#     for env_variable in env_variables:
+#         os.environ[env_variable] = env_values.get(env_variable)
 
 db_connection_config = {
-    "host": "localhost",
+    "host": os.getenv("POSTGRES_HOST"),
     "dbname": os.getenv("POSTGRES_DB"),
     "user": os.getenv("POSTGRES_USER"),
     "password": os.getenv("POSTGRES_PASSWORD"),
+    "port": os.getenv("POSTGRES_PORT"),
 }
 
 
@@ -24,12 +24,7 @@ class ConnectionManager:
         self.connection = None
 
     def connect(self):
-        try:
-            self.connection = psycopg.connect(**self.connection_config, autocommit=True)
-
-        except psycopg.Error as err:
-            # sqlstate = err.args[1]
-            print(str(err))
+        self.connection = psycopg.connect(**self.connection_config, autocommit=True)
 
     def disconnect(self):
         self.connection.close()

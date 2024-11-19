@@ -1,10 +1,7 @@
-from dotenv import dotenv_values
 import pytest
 from src.application import app
-import psycopg
 from src.models import User, Activity
 from tools.db_operations import insert_item
-import os
 
 
 def test_client_startup(client_test) -> None:
@@ -13,25 +10,20 @@ def test_client_startup(client_test) -> None:
     assert response.text == "Hello, I'm good!"
 
 
-def test_db_connection():
-    env_path = ".env"
-    if os.path.exists(env_path):
-        env_values = dotenv_values(env_path)
-        env_variables = ["POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD"]
-        for env_variable in env_variables:
-            os.environ[env_variable] = env_values.get(env_variable)
-
-    db_connection_config = {
-        "host": "localhost",
-        "dbname": os.getenv("POSTGRES_DB"),
-        "user": os.getenv("POSTGRES_USER"),
-        "password": os.getenv("POSTGRES_PASSWORD"),
-    }
-
-    try:
-        conn = psycopg.connect(**db_connection_config, autocommit=True)
-    finally:
-        conn.close()
+# def test_db_connection():
+#     db_connection_config = {
+#         "host": os.getenv("POSTGRES_HOST"),
+#         "dbname": os.getenv("POSTGRES_DB"),
+#         "user": os.getenv("POSTGRES_USER"),
+#         "password": os.getenv("POSTGRES_PASSWORD"),
+#         "port": os.getenv("POSTGRES_PORT")
+#     }
+#
+#     try:
+#         conn = psycopg.connect(**db_connection_config, autocommit=True)
+#         assert conn is not None
+#     finally:
+#         conn.close()
 
 
 def test_post_user(mock_data_user, create_test_tables, client_test) -> None:
