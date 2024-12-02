@@ -14,7 +14,6 @@ def db_connection():
     """
     env_path = ".env"
     if os.path.exists(env_path):
-        print("here")
         env_values = dotenv_values(env_path)
         env_variables = [
             "TEST_POSTGRES_USER",
@@ -33,8 +32,6 @@ def db_connection():
         "password": os.getenv("TEST_POSTGRES_PASSWORD"),
         "port": os.getenv("TEST_POSTGRES_PORT"),
     }
-    print(os.environ)
-    print(testdb_connection_config)
 
     connection_manager = ConnectionManager(testdb_connection_config)
     connection_manager.connect()
@@ -62,8 +59,8 @@ def create_test_tables():
     :return: a list of SQL commands.
     """
     commands = """
-                DROP TABLE IF EXISTS users;
                 DROP TABLE IF EXISTS activities;
+                DROP TABLE IF EXISTS users;
                 CREATE TABLE users (
                 user_id INT PRIMARY KEY,
                 username TEXT NOT NULL,
@@ -73,7 +70,7 @@ def create_test_tables():
                 );
                 CREATE TABLE activities (
                 activity_id INT PRIMARY KEY,
-                user_id INT,
+                user_id INT REFERENCES users (user_id),
                 time TIMESTAMPTZ,
                 activity_type TEXT,
                 activity_details TEXT

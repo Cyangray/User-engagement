@@ -10,7 +10,7 @@ Python project to provide data analysis and insights from website users, using F
 
 The easiest and most straightforward way to run this is through docker-compose.
 
-First install Docker. You can find instructions on `www.docker.com`. The version used to test this code is docker 27.2.0.
+First install Docker and docker-compose. You can find instructions on `www.docker.com` and `https://docs.docker.com/compose/install/`. The version used to test this code is docker 27.2.0.
 
 After having installed Docker, you need to create a `.env` file in the root folder of the API with the following content:
  ```
