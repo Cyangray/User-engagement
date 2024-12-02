@@ -1,6 +1,6 @@
 import psycopg
 import os
-
+import time
 from dotenv import dotenv_values
 
 env_path = ".env"
@@ -41,7 +41,21 @@ class ConnectionManager:
         """
         Connects to the database using the provided connection parameters.
         """
-        self.connection = psycopg.connect(**self.connection_config, autocommit=True)
+        # At startup - start connection to the SQL server
+        for attempt in range(5):
+            try:
+                self.connection = psycopg.connect(
+                    **self.connection_config, autocommit=True
+                )
+            except ConnectionError:
+                if attempt < 5:
+                    print(f"attempt {attempt} failed. Retrying in 5 seconds.")
+                    time.sleep(5)
+                else:
+                    print(
+                        "Max number of attempts tried. Connection to the database could not be established."
+                    )
+                    raise
 
     def disconnect(self):
         """

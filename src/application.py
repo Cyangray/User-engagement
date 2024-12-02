@@ -1,4 +1,3 @@
-import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -18,24 +17,29 @@ async def lifespan(application: FastAPI):
     :param application: FastAPI object, the app.
     """
 
-    # At startup - start connection to the SQL server
-    for attempt in range(5):
-        try:
-            connection_manager = get_db()
-            application.state.connection_manager = connection_manager
-            yield
-        except ConnectionError:
-            if attempt < 5:
-                print(f"attempt {attempt} failed. Retrying in 5 seconds.")
-                time.sleep(5)
-            else:
-                print(
-                    "Max number of attempts tried. Connection to the database could not be established."
-                )
-                raise
-        finally:
-            # At shutdown - close the connection
-            connection_manager.disconnect()
+    connection_manager = get_db()
+    application.state.connection_manager = connection_manager
+    yield
+    connection_manager.disconnect()
+
+    # # At startup - start connection to the SQL server
+    # for attempt in range(5):
+    #     try:
+    #         connection_manager = get_db()
+    #         application.state.connection_manager = connection_manager
+    #         yield
+    #     except ConnectionError:
+    #         if attempt < 5:
+    #             print(f"attempt {attempt} failed. Retrying in 5 seconds.")
+    #             time.sleep(5)
+    #         else:
+    #             print(
+    #                 "Max number of attempts tried. Connection to the database could not be established."
+    #             )
+    #             raise
+    #     finally:
+    #         # At shutdown - close the connection
+    #         connection_manager.disconnect()
 
 
 app = FastAPI(lifespan=lifespan)
