@@ -9,6 +9,9 @@ import pytest
 
 
 def test_validity_user(mock_data_user) -> None:
+    """
+    tests if a valid user passes validation.
+    """
     user = User(**mock_data_user)
     excluded_keys = ["_sa_instance_state"]
     for key, value in mock_data_user.items():
@@ -17,6 +20,9 @@ def test_validity_user(mock_data_user) -> None:
 
 
 def test_incomplete_user(mock_incomplete_data_user):
+    """
+    tests that an incomplete user does not pass validation.
+    """
     with pytest.raises(ValueError):
         User(**mock_incomplete_data_user)
 
@@ -29,6 +35,9 @@ def test_incomplete_user(mock_incomplete_data_user):
     ],
 )
 def test_invalid_user_user_id(user_id, mock_data_user) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for user_id does not pass the User validation.
+    """
     user = User(**mock_data_user)
     user.user_id = user_id
 
@@ -41,6 +50,9 @@ def test_invalid_user_user_id(user_id, mock_data_user) -> None:
     ],
 )
 def test_invalid_user_username(username, mock_data_user) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for username does not pass the User validation.
+    """
     user = User(**mock_data_user)
     user.username = username
 
@@ -63,6 +75,9 @@ def test_invalid_user_username(username, mock_data_user) -> None:
     ],
 )
 def test_invalid_user_email(email, mock_data_user) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for email does not pass the User validation.
+    """
     user = User(**mock_data_user)
     user.email = email
 
@@ -71,6 +86,9 @@ def test_invalid_user_email(email, mock_data_user) -> None:
     "age", [pytest.param(item, marks=pytest.mark.xfail) for item in [-2, "-2"]]
 )
 def test_invalid_user_age(age, mock_data_user) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for age does not pass the User validation.
+    """
     user = User(**mock_data_user)
     user.age = age
 
@@ -83,11 +101,17 @@ def test_invalid_user_age(age, mock_data_user) -> None:
     ],
 )
 def test_invalid_user_country(country, mock_data_user) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for country does not pass the User validation.
+    """
     user = User(**mock_data_user)
     user.country = country
 
 
 def test_validity_superuser(mock_data_superuser_complete) -> None:
+    """
+    tests if a valid superuser passes validation.
+    """
     superuser = SuperUser(**mock_data_superuser_complete)
     excluded_keys = ["_sa_instance_state"]
     for key, value in mock_data_superuser_complete.items():
@@ -103,11 +127,17 @@ def test_validity_superuser(mock_data_superuser_complete) -> None:
     ],
 )
 def test_invalid_superuser_role(role, mock_data_superuser_complete) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for role does not pass the SuperUser validation.
+    """
     superuser = SuperUser(**mock_data_superuser_complete)
     superuser.role = role
 
 
 def test_validity_activity(mock_data_activity) -> None:
+    """
+    tests if a valid activity passes validation.
+    """
     activity = Activity(**mock_data_activity)
     for key, value in mock_data_activity.items():
         if key == "time":
@@ -124,6 +154,9 @@ def test_validity_activity(mock_data_activity) -> None:
     ],
 )
 def test_invalid_activity_activity_id(activity_id, mock_data_activity) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for activity_id does not pass the Activity validation.
+    """
     activity = Activity(**mock_data_activity)
     activity.activity_id = activity_id
 
@@ -139,6 +172,9 @@ def test_invalid_activity_activity_id(activity_id, mock_data_activity) -> None:
     ],
 )
 def test_invalid_activity_time(time, mock_data_activity) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for time does not pass the Activity validation.
+    """
     activity = Activity(**mock_data_activity)
     activity.time = time
 
@@ -148,6 +184,9 @@ def test_invalid_activity_time(time, mock_data_activity) -> None:
     [pytest.param(item, marks=pytest.mark.xfail) for item in ["Login", "Pippo", ""]],
 )
 def test_invalid_activity_activity_type(activity_type, mock_data_activity) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for activity_type does not pass the Activity validation.
+    """
     activity = Activity(**mock_data_activity)
     activity.activity_type = activity_type
 
@@ -157,5 +196,8 @@ def test_invalid_activity_activity_type(activity_type, mock_data_activity) -> No
     [pytest.param(item, marks=pytest.mark.xfail) for item in [33, -1, 3.5]],
 )
 def test_invalid_activity_activity_detail(activity_details, mock_data_activity) -> None:
+    """
+    parametrized test checking different non-allowed values and formats for activity_details does not pass the Activity validation.
+    """
     activity = Activity(**mock_data_activity)
     activity.activity_details = activity_details

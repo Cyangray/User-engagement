@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: 5432
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  db-test:
+    image: postgres:latest
+    container_name: postgres_test
+    environment:
+      POSTGRES_USER: ${TEST_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${TEST_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${TEST_POSTGRES_DB}
+      POSTGRES_PORT: 5432
+    ports:
+      - "5433:5432"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod  # add "docker-compose build --target prod" to build prod, or "--target test" for test.
+    container_name: python_api
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: 5432
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+
+  api-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test  # add "docker-compose build --target prod" to build prod, or "--target test" for test.
+    container_name: python_api_test
+    environment:
+      TEST_POSTGRES_HOST: db-test
+      TEST_POSTGRES_USER: ${TEST_POSTGRES_USER}
+      TEST_POSTGRES_PASSWORD: ${TEST_POSTGRES_PASSWORD}
+      TEST_POSTGRES_DB: ${TEST_POSTGRES_DB}
+      TEST_POSTGRES_PORT: 5432
+    ports:
+      - "81:80"
+    depends_on:
+      - db-test

@@ -1,40 +1,42 @@
-from dotenv import dotenv_values
 import pytest
 from src.application import app
-import psycopg
 from src.models import User, Activity
 from tools.db_operations import insert_item
-import os
 
 
 def test_client_startup(client_test) -> None:
+    """
+    Tests the startup of the client.
+    :param client_test: The (test) client
+    """
     response = client_test.get("/")
     assert response.status_code == 200
     assert response.text == "Hello, I'm good!"
 
 
-def test_db_connection():
-    env_path = "db/.env"
-    if os.path.exists(env_path):
-        env_values = dotenv_values(env_path)
-        env_variables = ["POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD"]
-        for env_variable in env_variables:
-            os.environ[env_variable] = env_values.get(env_variable)
-
-    db_connection_config = {
-        "host": "localhost",
-        "dbname": os.getenv("POSTGRES_DB"),
-        "user": os.getenv("POSTGRES_USER"),
-        "password": os.getenv("POSTGRES_PASSWORD"),
-    }
-
-    try:
-        conn = psycopg.connect(**db_connection_config, autocommit=True)
-    finally:
-        conn.close()
+# def test_db_connection():
+#     """
+#     tests that connection to the database is established.
+#     """
+#     db_connection_config = {
+#         "host": os.getenv("POSTGRES_HOST"),
+#         "dbname": os.getenv("POSTGRES_DB"),
+#         "user": os.getenv("POSTGRES_USER"),
+#         "password": os.getenv("POSTGRES_PASSWORD"),
+#         "port": os.getenv("POSTGRES_PORT")
+#     }
+#
+#     try:
+#         conn = psycopg.connect(**db_connection_config, autocommit=True)
+#         assert conn is not None
+#     finally:
+#         conn.close()
 
 
 def test_post_user(mock_data_user, create_test_tables, client_test) -> None:
+    """
+    tests that a valid user data is posted to the API, and returns status_code 200.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -53,34 +55,39 @@ def test_post_user(mock_data_user, create_test_tables, client_test) -> None:
 
 
 def test_duplicate_id(mock_data_user, create_test_tables) -> None:
+    """
+    Tests that a second user with the same user_id and different email as the first one, will not be passed to the database.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
         user1 = User(**mock_data_user)
         user2 = User(**mock_data_user)
         insert_item(user1, "users", cur)
-
-        # test for duplicate ID
         with pytest.raises(Exception):
             user2.email = "ddd@eee.ff"
             insert_item(user2, "users", cur)
 
 
 def test_duplicate_email(mock_data_user, create_test_tables, client_test) -> None:
+    """
+    Tests that a second user with the same email and different user_id as the first one, will not be passed to the API or the database.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
         user1 = User(**mock_data_user)
         user2 = User(**mock_data_user)
         insert_item(user1, "users", cur)
-        # test for duplicate mail
-
         user2.user_id = user1.user_id - 1
         response = client_test.post("/users/", params={**user2.__dict__})
         assert response.status_code == 400
 
 
 def test_post_superuser(mock_data_superuser_complete, client_test) -> None:
+    """
+    Tests that a valid superuser will be passed to the API.
+    """
     response = client_test.post("/superusers/", params=mock_data_superuser_complete)
     data = response.json()
     excluded_keys = ["user_id"]
@@ -93,6 +100,9 @@ def test_post_superuser(mock_data_superuser_complete, client_test) -> None:
 def test_post_activity(
     mock_data_user, mock_data_activity, create_test_tables, client_test
 ) -> None:
+    """
+    Tests that a valid activity will be passed to the API.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -115,6 +125,9 @@ def test_post_activity(
 def test_post_activity_no_userid(
     mock_data_user, mock_data_activity, create_test_tables, client_test
 ) -> None:
+    """
+    Failtests that an error is raised if one tries to post an activity with a user_id not present in the database.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -138,6 +151,9 @@ def test_post_activity_no_userid(
 def test_filter_activities_by_user_id(
     mock_data_user, mock_data_activity, create_test_tables, client_test, mock_data_user2
 ) -> None:
+    """
+    Tests that the read_activities_by_userid works given valid input.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)
@@ -164,6 +180,9 @@ def test_filter_activities_by_user_id(
 def test_fail_filter_activities_user_id_not_found(
     mock_data_user, mock_data_activity, create_test_tables, client_test
 ) -> None:
+    """
+    Failtests that the read_activities_by_userid function in application.py will throw an error if there is no userid matching the query.
+    """
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         cur.execute(create_test_tables)

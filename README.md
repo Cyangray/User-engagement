@@ -2,49 +2,38 @@
 
 Python project to provide data analysis and insights from website users, using FastAPI.
 
-# Install
 
-This package was coded using Python3.12.7. Check on https://www.python.org/downloads/ how to install Python on your operative system.
-
-It is easier to install all dependencies with poetry.
-
-First, install poetry with
-
-```pipx install poetry```
-(or use `pip` if you want to work in a virtual environment).
-The installation was performed with poetry version 1.8.3, and this or later versions should work. If not, one may install precisely this version using
-
-```pipx install poetry==1.8.3```.
-
-Then, go to the main folder, and install all the dependencies using
-
-```poetry install```.
-
-If using Docker, the version used to test this code is docker 27.2.0.
 
 # Run
 
-To run it locally, you can just type
+## docker compose
 
-```fastapi run src/application.py --port 80```
+The easiest and most straightforward way to run this is through docker-compose.
 
-and then visit `http://0.0.0.0:80` on your browser.
+First install Docker and docker-compose. You can find instructions on `www.docker.com` and `https://docs.docker.com/compose/install/`. The version used to test this code is docker 27.2.0.
 
-## Docker
+After having installed Docker, you need to create a `.env` file in the root folder of the API with the following content:
+ ```
+POSTGRES_USER=<username>
+POSTGRES_PASSWORD=<password>
+POSTGRES_DB=<db_name>
+POSTGRES_PORT=5432
+POSTGRES_HOST=postgres
+TEST_POSTGRES_USER=test
+TEST_POSTGRES_PASSWORD=test
+TEST_POSTGRES_DB=test
+TEST_POSTGRES_PORT=5432
+TEST_POSTGRES_HOST=postgres_test
+```
+and then run `docker compose up` in your terminal.
+The API will then be accessible at `http://0.0.0.0:80/docs` in your browser. To close the API, press command/ctrl+c in the same terminal, and type `docker compose down`.
 
-To run it on Docker, go to the main folder and type
+## Local
 
-```docker build -t myimage .```
+To run it locally (not recommended), you should first set up a database container. When this is set up, and you have saved your environment variables in a `.env` file in the root folder, you proceed with the installation guide for the API, and finally run it.
 
-(the `myimage` image name is to be updated when the project grows)
 
-To run the docker, type
-
-```docker run -d --name mycontainer -p 80:80 myimage```
-
-your container should be running, and at `80:80` you should see the text "Hello, I'm good!".
-
-## Database
+### Database
 
 The database is run with PostgreSQL.
 
@@ -54,9 +43,10 @@ you can download the latest PostgreSQL image by typing
 
 in your terminal.
 
-You can then build an image. First, go to the User-engagement/db folder, create an empty .env file and write
+You can then build the database image to a docker container. Create an empty `.env` file in the root folder and write
  ```
- POSTGRES_USER=<username>
+POSTGRES_HOST=localhost
+POSTGRES_USER=<username>
 POSTGRES_PASSWORD=<password>
 POSTGRES_DB=<db_name>
 ```
@@ -87,3 +77,29 @@ you should obtain something like
  public | activities | table | <username>
  public | users      | table | <username>
 ```
+
+### Install API locally
+
+This package was coded using Python3.12.7. Check on https://www.python.org/downloads/ how to install Python on your operative system.
+
+It is easier to install all dependencies with poetry.
+
+First, install poetry with
+
+```pipx install poetry```
+(or use `pip` if you want to work in a virtual environment).
+The installation was performed with poetry version 1.8.3, and this or later versions should work. If not, one may install precisely this version using
+
+```pipx install poetry==1.8.3```.
+
+Then, go to the main folder, and install all the dependencies using
+
+```poetry install```.
+
+### Run
+
+You run the code locally by typing in a terminal window
+
+```fastapi run src/application.py --port 80```
+
+and then visit `http://0.0.0.0:80/docs` on your browser.
