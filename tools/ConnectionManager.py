@@ -3,7 +3,7 @@ import os
 import time
 from dotenv import dotenv_values
 
-env_path = ".env"
+env_path = "../.env"
 if os.path.exists(env_path):
     env_values = dotenv_values(env_path)
     env_variables = [
@@ -18,10 +18,10 @@ if os.path.exists(env_path):
 
 db_connection_config = {
     "host": os.getenv("POSTGRES_HOST"),
+    "port": os.getenv("POSTGRES_PORT"),
     "dbname": os.getenv("POSTGRES_DB"),
     "user": os.getenv("POSTGRES_USER"),
     "password": os.getenv("POSTGRES_PASSWORD"),
-    "port": os.getenv("POSTGRES_PORT"),
 }
 
 

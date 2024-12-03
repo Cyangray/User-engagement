@@ -3,7 +3,37 @@ import datetime
 from faker import Faker
 import numpy as np
 import math
+
+from tools.db_operations import insert_item
 from tools.tools import short_uuid4_generator
+
+rng = np.random.default_rng()
+
+
+def create_test_tables():
+    """
+    Helper fixture saving the command to erase and rebuild the SQL tables to be used in tests.
+    :return: a list of SQL commands.
+    """
+    commands = """
+                DROP TABLE IF EXISTS activities;
+                DROP TABLE IF EXISTS users;
+                CREATE TABLE users (
+                user_id INT PRIMARY KEY,
+                username TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                age SMALLINT,
+                country VARCHAR(2)
+                );
+                CREATE TABLE activities (
+                activity_id INT PRIMARY KEY,
+                user_id INT REFERENCES users (user_id),
+                time TIMESTAMPTZ,
+                activity_type TEXT,
+                activity_details TEXT
+                );
+                """
+    return commands
 
 
 def generate_fake_user(name=None, country=None, email=None, age=None):
@@ -22,17 +52,13 @@ def generate_fake_user(name=None, country=None, email=None, age=None):
     return {"username": name, "email": email, "country": country, "age": age}
 
 
-def post_fake_user_to_DB(random_user):
+def post_fake_user_to_DB(cursor, fake_user):
     """
     Function taking a dictionary as input, creating a User object, and posting it to database.
-    TODO: this is a placeholder until the SQL part is complete
     """
-
-    # placeholder until SQL part complete
-    user = User(user_id=short_uuid4_generator(), **random_user)
+    user = User(user_id=short_uuid4_generator(), **fake_user)
+    insert_item(user, "users", cursor)
     return user
-
-    # post_user(random_user["fake_username"], random_user["fake_email"], random_user["fake_age"], random_user["fake_country"])
 
 
 def generate_fake_activity(
@@ -58,20 +84,12 @@ def generate_fake_activity(
     }
 
 
-def post_fake_activity_to_DB(fake_activity):
+def post_fake_activity_to_DB(cursor, fake_activity):
     """
     Function taking a dictionary as input, creating an Activity object, and posting it to database.
-    TODO: this is a placeholder until the SQL part is complete
     """
-
-    # placeholder until SQL part complete
     activity = Activity(activity_id=short_uuid4_generator(), **fake_activity)
-    return activity
-
-    # post_activity(fake_activity["time"], fake_activity["user_id"], fake_activity["activity_type"], fake_activity["activity_details"])
-
-
-rng = np.random.default_rng()
+    insert_item(activity, "activities", cursor)
 
 
 def generate_dates(sessions_per_year):
@@ -163,19 +181,9 @@ def generate_session(date, user_id, n_activities_per_minute, length_session):
     return list_of_activities
 
 
-def post_session(list_of_activities):
+def post_session(cursor, list_of_activities):
     """
     function posting a session to the database
-    TODO: placeholder until the DB part is complete
     """
-    new_list = []
     for fake_activity in list_of_activities:
-        activity = post_fake_activity_to_DB(fake_activity)
-        new_list.append(activity)
-    return new_list
-
-
-# def post_session(list_of_activities): #REAL ONE TO USE LATER WHEN SQL SET UP
-#
-#     for activity in list_of_activities:
-#         post_fake_activity_to_DB(activity)
+        post_fake_activity_to_DB(cursor, fake_activity)

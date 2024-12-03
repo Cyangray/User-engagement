@@ -8,6 +8,8 @@ from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
 from tools.db_operations import retrieve_items, insert_item
 from tools.tools import short_uuid4_generator
 from tools.ConnectionManager import get_db
+# import pandas as pd
+# import matplotlib.pyplot as plt #will be useful soon
 
 
 @asynccontextmanager
@@ -183,3 +185,31 @@ async def read_activities_by_userid(
             for row in act_list
         ]
     return act_list
+
+
+# some plot functions that will go into API endpoints, after some manipulations
+### collect data
+# df = pd.DataFrame([activity.__dict__ for activity in activities])
+#
+# # plot e.g. activities grouped by hour
+# #subset = df[df["activity_type"].isin(["click"])]
+# subset = df[df["activity_type"].isin(["login", "purchase", "logout"])]
+# subset.groupby([subset["time"].dt.hour, "activity_type"]).size().unstack(
+#     fill_value=0
+# ).plot(kind="bar")
+# plt.show()
+
+
+# # plot something for just one user (work in progress, but it shows that the code works)
+# subset = df[df["user_id"] == users[0].user_id]
+# subset = subset[["time", "activity_type"]]
+# subset.set_index("time", inplace=True)
+# subset = (
+#     subset.groupby("activity_type")
+#     .resample("W")
+#     .size()
+#     .unstack(fill_value=0)
+#     .transpose()
+# )
+# subset.plot(kind="bar", stacked=True)
+# plt.show()
