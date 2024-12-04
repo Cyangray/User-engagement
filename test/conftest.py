@@ -69,7 +69,7 @@ def create_test_tables():
                 country VARCHAR(2)
                 );
                 CREATE TABLE activities (
-                activity_id INT PRIMARY KEY,
+                activity_id UUID PRIMARY KEY,
                 user_id INT REFERENCES users (user_id),
                 time TIMESTAMPTZ,
                 activity_type TEXT,
@@ -92,7 +92,7 @@ def activity_id_test():
     """
     Fixture always returning the same activity_id for tests.
     """
-    return 1157425173
+    return "8e1ec19c-02e4-408b-93c1-9664e800e772"
 
 
 @pytest.fixture(scope="session")

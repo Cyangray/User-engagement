@@ -27,7 +27,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: prod  # add "docker-compose build --target prod" to build prod, or "--target test" for test.
+      target: dev  # add "docker-compose build --target prod" to build prod, or "--target test" for test.
     container_name: python_api
     environment:
       POSTGRES_HOST: db

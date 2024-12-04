@@ -54,7 +54,7 @@ POSTGRES_DB=<db_name>
 Then, build your image and run the container by typing the following instructions in the terminal in the same folder
 
 ```
-docker build -t postgres-img .
+docker build -t postgres-img -f Dockerfile_db .
 
 docker run -d --name postgres-cont --env-file .env -p 5432:5432 postgres-img
 ```

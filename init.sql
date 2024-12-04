@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS activities (
-    activity_id INT PRIMARY KEY,
+    activity_id UUID PRIMARY KEY,
     user_id INT REFERENCES users (user_id),
     time TIMESTAMPTZ,
     activity_type TEXT,
