@@ -6,7 +6,7 @@ from pydantic import PositiveInt, EmailStr
 from pydantic_extra_types.country import CountryAlpha2
 from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
 from tools.db_operations import retrieve_items, insert_item
-from tools.tools import short_uuid4_generator
+from tools.tools import short_uuid4_generator, long_uuid4_generator
 from tools.ConnectionManager import get_db
 # import pandas as pd
 # import matplotlib.pyplot as plt #will be useful soon
@@ -137,7 +137,7 @@ async def post_activity(
     ## returns
     Activity object.
     """
-    activity_id = short_uuid4_generator()
+    activity_id = long_uuid4_generator()
     activity = Activity(
         activity_id=activity_id,
         time=time,

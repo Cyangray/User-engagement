@@ -15,6 +15,7 @@ SESSION_LENGTH_HOURS = 2
 SESSIONS_PER_YEAR = 5
 
 if __name__ == "__main__":
+    print("writing fake data to database...")
     connection_manager = get_db()
     cursor = connection_manager.connection.cursor()
     cursor.execute(create_test_tables())
@@ -32,3 +33,5 @@ if __name__ == "__main__":
                 date, user.user_id, CLICKS_PER_MINUTE, SESSION_LENGTH_HOURS
             )
             post_session(cursor, list_of_fake_activities_in_session)
+    connection_manager.disconnect()
+    print("Fake data generated and posted to database.")

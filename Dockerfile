@@ -9,6 +9,7 @@ RUN pip install poetry==1.8.3
 COPY ./pyproject.toml /code/pyproject.toml
 COPY ./poetry.lock /code/poetry.lock
 RUN poetry config virtualenvs.create false
+ENV PYTHONPATH="/code"
 
 # Stage 1: Development
 FROM base AS dev
@@ -17,7 +18,9 @@ COPY src/ /code/src/
 COPY tools/ /code/tools/
 COPY test/ /code/test/
 COPY devtools/ /code/devtools/
-CMD ["fastapi", "run", "src/application.py", "--port", "80"]
+COPY ./cmd.sh /code/cmd.sh
+RUN chmod +x /code/cmd.sh
+CMD ["/code/cmd.sh"]
 
 
 # Stage 2: Testing

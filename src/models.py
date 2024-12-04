@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from enum import Enum
 from pydantic import PositiveInt, EmailStr, field_validator, model_validator, BaseModel
@@ -77,7 +78,7 @@ class Activity(BaseModel, validate_assignment=True):
     Activity model. Called by the function "post_activity" in application.py.
     """
 
-    activity_id: PositiveInt
+    activity_id: uuid.UUID
     time: datetime
     user_id: PositiveInt
     activity_type: ActivityTypes

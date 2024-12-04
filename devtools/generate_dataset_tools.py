@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 from tools.db_operations import insert_item
-from tools.tools import short_uuid4_generator
+from tools.tools import short_uuid4_generator, long_uuid4_generator
 
 rng = np.random.default_rng()
 
@@ -26,7 +26,7 @@ def create_test_tables():
                 country VARCHAR(2)
                 );
                 CREATE TABLE activities (
-                activity_id INT PRIMARY KEY,
+                activity_id UUID PRIMARY KEY,
                 user_id INT REFERENCES users (user_id),
                 time TIMESTAMPTZ,
                 activity_type TEXT,
@@ -88,7 +88,7 @@ def post_fake_activity_to_DB(cursor, fake_activity):
     """
     Function taking a dictionary as input, creating an Activity object, and posting it to database.
     """
-    activity = Activity(activity_id=short_uuid4_generator(), **fake_activity)
+    activity = Activity(activity_id=long_uuid4_generator(), **fake_activity)
     insert_item(activity, "activities", cursor)
 
 
