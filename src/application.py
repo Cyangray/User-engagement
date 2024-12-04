@@ -5,7 +5,7 @@ from fastapi.responses import PlainTextResponse
 from pydantic import PositiveInt, EmailStr
 from pydantic_extra_types.country import CountryAlpha2
 from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
-from tools.db_operations import retrieve_items, insert_item
+from tools.db_operations import retrieve_items, insert_item, sql_to_dataframe
 from tools.tools import short_uuid4_generator, long_uuid4_generator
 from tools.ConnectionManager import get_db
 # import pandas as pd
@@ -152,6 +152,14 @@ async def post_activity(
             raise HTTPException(status_code=404, detail="User ID not found")
         insert_item(activity, "activities", cur)
     return activity
+
+
+@app.get("/somedata/")
+async def read_some_data(table: str = "users"):
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        data = sql_to_dataframe(table, cur)
+    return data.head().to_json()
 
 
 @app.get("/activities/")

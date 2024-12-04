@@ -1,5 +1,6 @@
 import psycopg
 from pydantic import BaseModel
+import pandas as pd
 
 
 def create_insert_query(obj: BaseModel, table: str) -> str:
@@ -59,3 +60,12 @@ def retrieve_items(
     query = create_retrieve_query(key, table, where)
     tuples = cur.execute(query).fetchall()
     return [item[0] for item in tuples]
+
+
+def sql_to_dataframe(table, cur: psycopg.Cursor, where=None):
+    query = create_retrieve_query("*", table, where)
+    tuples = cur.execute(query).fetchall()
+
+    # Now we need to transform the list into a pandas DataFrame:
+    df = pd.DataFrame(tuples)
+    return df
