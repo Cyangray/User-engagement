@@ -154,12 +154,49 @@ async def post_activity(
     return activity
 
 
-@app.get("/somedata/")
-async def read_some_data(table: str = "users"):
+@app.get("/activity_data/")
+async def histogram_activity_types(
+    time_bin: str = "hour",
+    activity1=None,
+    activity2=None,
+    activity3=None,
+    activity4=None,
+):
+    # Only select the interesting activity types to plot
+    activity_types_input = [activity1, activity2, activity3, activity4]
+    activity_types = []
+    if all(el is None for el in activity_types_input):
+        activity_types = ["login", "purchase", "logout"]
+    else:
+        activity_types_input = list(
+            filter(lambda x: x is not None, activity_types_input)
+        )
+        allowed_activities = [
+            key for key, _ in ActivityTypes._value2member_map_.items()
+        ]
+        for activity_type in activity_types_input:
+            if activity_type in allowed_activities:
+                activity_types.append(activity_type)
+            else:
+                raise HTTPException(
+                    status_code=404, detail=f"{activity_type}: No such activity type"
+                )
+
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
-        data = sql_to_dataframe(table, cur)
-    return data.head().to_json()
+        df = sql_to_dataframe("activities", cur)
+
+    subset = df[df["activity_type"].isin(activity_types)]
+    if time_bin == "hour":
+        subset.groupby([subset["time"].dt.hour, "activity_type"]).size().unstack(
+            fill_value=0
+        )  # .plot(kind="bar")
+    elif time_bin == "day":
+        subset.groupby([subset["time"].dt.day, "activity_type"]).size().unstack(
+            fill_value=0
+        )  # .plot(kind="bar")
+
+    return subset.to_html()
 
 
 @app.get("/activities/")
@@ -193,19 +230,6 @@ async def read_activities_by_userid(
             for row in act_list
         ]
     return act_list
-
-
-# some plot functions that will go into API endpoints, after some manipulations
-### collect data
-# df = pd.DataFrame([activity.__dict__ for activity in activities])
-#
-# # plot e.g. activities grouped by hour
-# #subset = df[df["activity_type"].isin(["click"])]
-# subset = df[df["activity_type"].isin(["login", "purchase", "logout"])]
-# subset.groupby([subset["time"].dt.hour, "activity_type"]).size().unstack(
-#     fill_value=0
-# ).plot(kind="bar")
-# plt.show()
 
 
 # # plot something for just one user (work in progress, but it shows that the code works)

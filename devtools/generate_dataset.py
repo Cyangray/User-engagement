@@ -9,7 +9,7 @@ from devtools.generate_dataset_tools import (
 
 from tools.ConnectionManager import get_db
 
-N_USERS = 20
+N_USERS = 5
 CLICKS_PER_MINUTE = 3
 SESSION_LENGTH_HOURS = 2
 SESSIONS_PER_YEAR = 5

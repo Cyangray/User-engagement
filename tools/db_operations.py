@@ -65,7 +65,9 @@ def retrieve_items(
 def sql_to_dataframe(table, cur: psycopg.Cursor, where=None):
     query = create_retrieve_query("*", table, where)
     tuples = cur.execute(query).fetchall()
-
+    colnames = [desc[0] for desc in cur.description]
     # Now we need to transform the list into a pandas DataFrame:
     df = pd.DataFrame(tuples)
+    for i, colname in enumerate(colnames):
+        df.rename(columns={i: colname}, inplace=True)
     return df
