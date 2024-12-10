@@ -1,14 +1,23 @@
 from contextlib import asynccontextmanager
 
+import pandas as pd
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
 from pydantic import PositiveInt, EmailStr
 from pydantic_extra_types.country import CountryAlpha2
 from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
 from tools.db_operations import retrieve_items, insert_item, sql_to_dataframe
-from tools.tools import short_uuid4_generator, long_uuid4_generator
+from tools.tools import (
+    short_uuid4_generator,
+    long_uuid4_generator,
+    filter_time,
+    polish_activity_types_list,
+    check_for_allowed_freq_string,
+    validate_time_bin,
+    validate_time_entries,
+)
 from tools.ConnectionManager import get_db
-# import pandas as pd
 # import matplotlib.pyplot as plt #will be useful soon
 
 
@@ -154,49 +163,208 @@ async def post_activity(
     return activity
 
 
-@app.get("/activity_data/")
-async def histogram_activity_types(
+@app.get("/activity_types_grouped/")
+async def histogram_activity_types_grouped(
     time_bin: str = "hour",
-    activity1=None,
-    activity2=None,
-    activity3=None,
-    activity4=None,
+    activity1: str = None,
+    activity2: str = None,
+    activity3: str = None,
+    activity4: str = None,
+    start_time: str = None,
+    end_time: str = None,
+    period_days: int = 30,
+    period_hours: int = 0,
 ):
-    # Only select the interesting activity types to plot
-    activity_types_input = [activity1, activity2, activity3, activity4]
-    activity_types = []
-    if all(el is None for el in activity_types_input):
-        activity_types = ["login", "purchase", "logout"]
-    else:
-        activity_types_input = list(
-            filter(lambda x: x is not None, activity_types_input)
-        )
-        allowed_activities = [
-            key for key, _ in ActivityTypes._value2member_map_.items()
-        ]
-        for activity_type in activity_types_input:
-            if activity_type in allowed_activities:
-                activity_types.append(activity_type)
-            else:
-                raise HTTPException(
-                    status_code=404, detail=f"{activity_type}: No such activity type"
-                )
+    """
+    Function giving information about activities per time bin, given a time period. The user provides a time bin (hours, days, months...) and the function returns the amount of the given activity types per time bin.
+    For the time period, either provide start and end times, or end time and period (in days and hours).
 
+    ## Parameters
+
+    **time_bin** *string*: time bin to use when grouping activity types. It may take the values "hour", "day", "month", "year".
+
+
+    **activity1** to **activity4** *string*: The activity types to count. Each parameter may take the values "login", "logout", "purchase" and "click". If nothing is chosen, the default "login", "logout" and "purchase" are chosen.
+
+    **start_time** and **end_time** *string in the YYYY-MM-DDTHH:MM:SSZ format*: Start and end times for the time period under consideration.
+
+    **period_days** and **period_hours** *int*: If only end_time is provided, the start time is calculated from this time difference.
+    """
+
+    # validate input
+    validate_time_entries(period_days, period_hours, start_time, end_time)
+    validate_time_bin(time_bin)
+
+    # Connect to database and extract dataframe
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
         df = sql_to_dataframe("activities", cur)
 
+    # filter for time period and activity type
+    activity_types = polish_activity_types_list(
+        [activity1, activity2, activity3, activity4],
+        default=["login", "purchase", "logout"],
+    )
+    df = filter_time(df, start_time, end_time, period_days, period_hours)
     subset = df[df["activity_type"].isin(activity_types)]
-    if time_bin == "hour":
-        subset.groupby([subset["time"].dt.hour, "activity_type"]).size().unstack(
-            fill_value=0
-        )  # .plot(kind="bar")
-    elif time_bin == "day":
-        subset.groupby([subset["time"].dt.day, "activity_type"]).size().unstack(
-            fill_value=0
-        )  # .plot(kind="bar")
+    subset[time_bin] = getattr(df["time"].dt, time_bin)
+
+    # group according to time bin
+    subset.groupby([subset[time_bin], "activity_type"]).size().unstack(fill_value=0)
+    return subset.to_html()  # TODO: fix output format later, and fix tests
+
+
+@app.get("/total_activity_over_time/")
+async def total_activity_over_time(
+    activity1: str = None,
+    activity2: str = None,
+    activity3: str = None,
+    activity4: str = None,
+    start_time: str = None,
+    end_time: str = None,
+    period_days: int = 365,
+    period_hours: int = 0,
+    frequency: str = "MS",
+):
+    """
+    Function giving information about activities over time, given a time period and frequency. The user provides a frequency (hours, days, months, quarter...) and the function returns the amount of the given activity types per time unit.
+    For the time period, either provide start and end times, or end time and period (in days and hours).
+
+    ## Parameters
+
+    **activity1** to **activity4** *string*: The activity types to count. Each parameter may take the values "login", "logout", "purchase" and "click". If nothing is chosen, the default "login", "logout" and "purchase" are chosen.
+
+    **start_time** and **end_time** *string in the YYYY-MM-DDTHH:MM:SSZ format*: Start and end times for the time period under consideration.
+
+    **period_days** and **period_hours** *int*: If only end_time is provided, the start time is calculated from this time difference.
+
+    **frequency** *str*: the time unit to subdivide the period in. It follows Panda's offset aliases scheme (https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases). Some of the mostly used strings are "min" (minutes), "h" (hours), "D" (day), "W" (week), "MS" (month start), "QS" (quarter start) and "YS" (year start). Combinations are also possible (e.g. "2D12h30min").
+    """
+
+    # validate input
+    check_for_allowed_freq_string(frequency)
+    validate_time_entries(period_days, period_hours, start_time, end_time)
+
+    # Connect to database and extract dataframe
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        df = sql_to_dataframe("activities", cur)
+
+    # filter for time period and activity type
+    activity_types = polish_activity_types_list(
+        [activity1, activity2, activity3, activity4],
+        default=["login", "purchase", "logout"],
+    )
+    subset = filter_time(df, start_time, end_time, period_days, period_hours)
+    subset = subset[subset["activity_type"].isin(activity_types)]
+
+    # fill time bins
+    subset = subset.groupby(["time", "activity_type"]).size().reset_index(name="count")
+    subset = subset.pivot(index="time", columns="activity_type", values="count").fillna(
+        0
+    )
+    subset = subset.groupby(pd.Grouper(freq=frequency)).sum()
+    # TODO: in plot: stacked bars
+    return subset.to_html()
+
+
+@app.get("/purchases/")
+async def avg_purchases(
+    start_time: str = None,
+    end_time: str = None,
+    period_days: int = 30,
+    period_hours: int = 0,
+    frequency: str = "MS",
+):
+    """
+    Function giving information about the average number of purchases per login, given a time period and frequency. The user provides a frequency (hours, days, months, quarter...) and the function returns the average number of purchases per login per chosen time unit.
+    For the time period, either provide start and end times, or end time and period (in days and hours).
+
+    ## Parameters
+
+    **start_time** and **end_time** *string in the YYYY-MM-DDTHH:MM:SSZ format*: Start and end times for the time period under consideration.
+
+    **period_days** and **period_hours** *int*: If only end_time is provided, the start time is calculated from this time difference.
+
+    **frequency** *str*: the time unit to subdivide the period in. It follows Panda's offset aliases scheme (https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases). Some of the mostly used strings are "min" (minutes), "h" (hours), "D" (day), "W" (week), "MS" (month start), "QS" (quarter start) and "YS" (year start). Combinations are also possible (e.g. "2D12h30min").
+    """
+
+    # validate input
+    check_for_allowed_freq_string(frequency)
+    validate_time_entries(period_days, period_hours, start_time, end_time)
+
+    # Connect to database and extract dataframe
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        df = sql_to_dataframe("activities", cur)
+
+    # filter for time period and activity type
+    activity_types = ["login", "purchase"]
+    subset = filter_time(df, start_time, end_time, period_days, period_hours)
+    subset = subset[subset["activity_type"].isin(activity_types)]
+
+    # fill time bins
+    subset = subset.groupby(["time", "activity_type"]).size().reset_index(name="count")
+    subset = subset.pivot(index="time", columns="activity_type", values="count").fillna(
+        0
+    )
+    subset = subset.groupby(pd.Grouper(freq=frequency)).sum()
+
+    # calculate purchases per login per time bin
+    subset["avg_purchases_per_login"] = subset["purchase"] / subset["login"]
 
     return subset.to_html()
+
+
+@app.get("/avg_time/")
+async def avg_time_spent(
+    start_time: str = None,
+    end_time: str = None,
+    period_days: int = 30,
+    period_hours: int = 0,
+    frequency: str = "MS",
+):
+    """
+    Function giving information about the average time spent per user session (calculated as time between logout and login). The user provides a frequency (hours, days, months, quarter...) and the function returns the average number of purchases per login per chosen time unit.
+    For the time period, either provide start and end times, or end time and period (in days and hours).
+
+    ## Parameters
+
+    **start_time** and **end_time** *string in the YYYY-MM-DDTHH:MM:SSZ format*: Start and end times for the time period under consideration.
+
+    **period_days** and **period_hours** *int*: If only end_time is provided, the start time is calculated from this time difference.
+
+    **frequency** *str*: the time unit to subdivide the period in. It follows Panda's offset aliases scheme (https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases). Some of the mostly used strings are "min" (minutes), "h" (hours), "D" (day), "W" (week), "MS" (month start), "QS" (quarter start) and "YS" (year start). Combinations are also possible (e.g. "2D12h30min").
+    """
+
+    # validate input
+    check_for_allowed_freq_string(frequency)
+    validate_time_entries(period_days, period_hours, start_time, end_time)
+
+    # Connect to database and extract dataframe
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        df = sql_to_dataframe("activities", cur)
+
+    # filter for time period
+    subset = filter_time(df, start_time, end_time, period_days, period_hours)
+
+    # create new dataframe with session information (user_id, login_time, logout_time, duration)
+    subset = subset[["time", "user_id", "activity_type"]]
+    logins = subset[subset["activity_type"] == "login"].reset_index(drop=True)
+    logouts = subset[subset["activity_type"] == "logout"].reset_index(drop=True)
+    sessions = pd.DataFrame(
+        {
+            "user_id": logins["user_id"],
+            "login_time": logins["time"],
+            "logout_time": logouts["time"],
+        }
+    )
+    sessions["duration"] = sessions["logout_time"] - sessions["login_time"]
+    sessions = sessions.set_index("login_time")
+    sessions = sessions.groupby(pd.Grouper(freq=frequency)).mean()
+
+    return sessions.to_html()
 
 
 @app.get("/activities/")

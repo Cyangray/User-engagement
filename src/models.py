@@ -90,9 +90,10 @@ class Activity(BaseModel, validate_assignment=True):
         Validator checking that the time attribute is in the form "YYYY-MM-DDTHH:MM:SSZ", if string.
         """
         if isinstance(entry, str):
-            if ("Z" in entry) or ("+00:00" in entry):
+            try:
+                assert ("Z" in entry) or ("+00:00" in entry)
                 return datetime.fromisoformat(entry)
-            else:
+            except ValueError:
                 raise ValueError(
                     'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+00:00" (UTC time)'
                 )
