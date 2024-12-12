@@ -17,10 +17,10 @@ RUN poetry install --no-interaction --no-ansi
 COPY src/ /code/src/
 COPY tools/ /code/tools/
 COPY test/ /code/test/
-COPY devtools/ /code/devtools/
-COPY ./cmd.sh /code/cmd.sh
-RUN chmod +x /code/cmd.sh
-CMD ["/code/cmd.sh"]
+CMD ["fastapi", "run", "src/application.py", "--port", "80"]
+#COPY ./cmd.sh /code/cmd.sh
+#RUN chmod +x /code/cmd.sh
+#CMD ["/code/cmd.sh"]
 
 
 # Stage 2: Testing

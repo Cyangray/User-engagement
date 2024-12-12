@@ -6,8 +6,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
 from pydantic import PositiveInt, EmailStr
 from pydantic_extra_types.country import CountryAlpha2
+
+from tools.generate_dataset import generate_dataset
 from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
 from tools.db_operations import retrieve_items, insert_item, sql_to_dataframe
+from tools.shortcuts import reset_tables
 from tools.tools import (
     short_uuid4_generator,
     long_uuid4_generator,
@@ -18,7 +21,6 @@ from tools.tools import (
     validate_time_entries,
 )
 from tools.ConnectionManager import get_db
-# import matplotlib.pyplot as plt #will be useful soon
 
 
 @asynccontextmanager
@@ -183,7 +185,6 @@ async def histogram_activity_types_grouped(
 
     **time_bin** *string*: time bin to use when grouping activity types. It may take the values "hour", "day", "month", "year".
 
-
     **activity1** to **activity4** *string*: The activity types to count. Each parameter may take the values "login", "logout", "purchase" and "click". If nothing is chosen, the default "login", "logout" and "purchase" are chosen.
 
     **start_time** and **end_time** *string in the YYYY-MM-DDTHH:MM:SSZ format*: Start and end times for the time period under consideration.
@@ -210,8 +211,10 @@ async def histogram_activity_types_grouped(
     subset[time_bin] = getattr(df["time"].dt, time_bin)
 
     # group according to time bin
-    subset.groupby([subset[time_bin], "activity_type"]).size().unstack(fill_value=0)
-    return subset.to_html()  # TODO: fix output format later, and fix tests
+    subset = (
+        subset.groupby([subset[time_bin], "activity_type"]).size().unstack(fill_value=0)
+    )
+    return subset.to_json()
 
 
 @app.get("/total_activity_over_time/")
@@ -264,8 +267,7 @@ async def total_activity_over_time(
         0
     )
     subset = subset.groupby(pd.Grouper(freq=frequency)).sum()
-    # TODO: in plot: stacked bars
-    return subset.to_html()
+    return subset.to_json()
 
 
 @app.get("/purchases/")
@@ -313,7 +315,7 @@ async def avg_purchases(
     # calculate purchases per login per time bin
     subset["avg_purchases_per_login"] = subset["purchase"] / subset["login"]
 
-    return subset.to_html()
+    return subset.to_json()
 
 
 @app.get("/avg_time/")
@@ -364,7 +366,7 @@ async def avg_time_spent(
     sessions = sessions.set_index("login_time")
     sessions = sessions.groupby(pd.Grouper(freq=frequency)).mean()
 
-    return sessions.to_html()
+    return sessions.to_json()
 
 
 @app.get("/activities/")
@@ -400,16 +402,29 @@ async def read_activities_by_userid(
     return act_list
 
 
-# # plot something for just one user (work in progress, but it shows that the code works)
-# subset = df[df["user_id"] == users[0].user_id]
-# subset = subset[["time", "activity_type"]]
-# subset.set_index("time", inplace=True)
-# subset = (
-#     subset.groupby("activity_type")
-#     .resample("W")
-#     .size()
-#     .unstack(fill_value=0)
-#     .transpose()
-# )
-# subset.plot(kind="bar", stacked=True)
-# plt.show()
+@app.post("/regen_dataset/")
+async def regenerate_dataset(
+    n_users: int,  # positive int!
+    clicks_per_minute: int,  # positive int!
+    session_length_hours: int,  # positive int!
+    sessions_per_year: int,  # positive int!
+) -> None:
+    """
+    Function that, when called, erases and recreate a new dataset in the database.
+
+    ## parameters
+    **n_users** *integer*: number of uses to be created.
+    **clicks_per_minute** *integer*: average number of clicks per minute per user.
+    **session_length_hours** *integer*: how long is a user session on average (time between login and logout)
+    **sessions_per_year** *integer*: How many sessions per year per user.
+
+    """
+    sql_string = reset_tables()
+    app.state.connection_manager.connection.cursor().execute(sql_string)
+    generate_dataset(
+        n_users,
+        clicks_per_minute,
+        session_length_hours,
+        sessions_per_year,
+        connection_manager=app.state.connection_manager,
+    )

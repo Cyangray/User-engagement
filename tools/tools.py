@@ -43,7 +43,7 @@ def filter_time(
     if period_days or period_hours:
         period = datetime.timedelta(days=period_days, hours=period_hours)
 
-    if end_time is None:
+    if end_time is None or end_time == "":
         end_time = pd.Timestamp.now(tz="Etc/UTC")
     else:
         end_time = datetime.datetime.fromisoformat(end_time)

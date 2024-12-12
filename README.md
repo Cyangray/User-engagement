@@ -28,6 +28,10 @@ TEST_POSTGRES_HOST=postgres_test
 and then run `docker compose up` in your terminal.
 The API will then be accessible at `http://0.0.0.0:80/docs` in your browser. To close the API, press command/ctrl+c in the same terminal, and type `docker compose down`.
 
+### Dashboard
+This is still under development, and can only be run locally (i.e. it is still not dockerized). To run it, first run the containers, and then simply run
+`streamlit run frontend/pages/homepage.py` from the project root directory. In order to do this, you should have streamlit installed on your system or your virtual environment. This command should automatically open a page in your browser with the dashboard homepage and description of the project. This has been tested with `streamlit` version `1.41.0`.
+
 ## Local
 
 To run it locally (not recommended), you should first set up a database container. When this is set up, and you have saved your environment variables in a `.env` file in the root folder, you proceed with the installation guide for the API, and finally run it.
