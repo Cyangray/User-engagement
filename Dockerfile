@@ -18,9 +18,6 @@ COPY src/ /code/src/
 COPY tools/ /code/tools/
 COPY test/ /code/test/
 CMD ["fastapi", "run", "src/application.py", "--port", "80"]
-#COPY ./cmd.sh /code/cmd.sh
-#RUN chmod +x /code/cmd.sh
-#CMD ["/code/cmd.sh"]
 
 
 # Stage 2: Testing
@@ -38,3 +35,10 @@ RUN poetry install --no-interaction --no-ansi --without test
 COPY src/ /code/src/
 COPY tools/ /code/tools/
 CMD ["fastapi", "run", "src/application.py", "--port", "80"]
+
+
+# Stage 4: frontend
+FROM base AS frontend
+RUN poetry install --no-interaction --no-ansi --without test
+COPY frontend/ /code/frontend/
+CMD ["streamlit", "run", "frontend/homepage.py"]

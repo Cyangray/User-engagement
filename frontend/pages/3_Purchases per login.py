@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import pandas as pd
 import datetime
@@ -33,8 +35,9 @@ time_input_dict = {
 }
 
 st.markdown("## Plot")
+host = os.getenv("API_HOST")
 res = requests.get(
-    url="http://0.0.0.0:80/purchases/",
+    url=f"http://{host}:80/purchases/",
     params={**time_input_dict, "frequency": frequency},
 )
 

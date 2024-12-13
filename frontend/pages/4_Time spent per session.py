@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import pandas as pd
 import datetime
@@ -32,13 +34,14 @@ time_input_dict = {
     "period_hours": hours_back,
 }
 
-# TODO: learn Altair chart and fix y axis range
 st.markdown("## Plot")
+host = os.getenv("API_HOST")
 res = requests.get(
-    url="http://0.0.0.0:80/avg_time/",
+    url=f"http://{host}:80/avg_time/",
     params={**time_input_dict, "frequency": frequency},
 )
 df = pd.read_json(StringIO(res.json()))
 st.line_chart(data=df.loc[:, ["duration"]], y_label="session duration (s)")
+
 st.markdown("## Table")
 st.dataframe(df.loc[:, ["duration"]])

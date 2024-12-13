@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import requests
 
@@ -36,7 +38,8 @@ input_dict = {
     "sessions_per_year": sessions_per_year,
 }
 if st.button("regenerate"):
-    res = requests.post(url="http://0.0.0.0:80/regen_dataset/", params=input_dict)
+    host = os.getenv("API_HOST")
+    res = requests.post(url=f"http://{host}:80/regen_dataset/", params=input_dict)
 
     if res.status_code == 200:
         st.write("Data generated!")

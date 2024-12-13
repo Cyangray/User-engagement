@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import pandas as pd
 import datetime
@@ -67,8 +69,9 @@ time_input_dict = {
 
 
 st.markdown("## Plot")
+host = os.getenv("API_HOST")
 res = requests.get(
-    url="http://0.0.0.0:80/activity_types_grouped/",
+    url=f"http://{host}:80/activity_types_grouped/",
     params={**activity_input_dict, **time_input_dict, "time_bin": time_bin},
 )
 
