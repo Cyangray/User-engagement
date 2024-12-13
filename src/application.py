@@ -353,20 +353,26 @@ async def avg_time_spent(
 
     # create new dataframe with session information (user_id, login_time, logout_time, duration)
     subset = subset[["time", "user_id", "activity_type"]]
-    logins = subset[subset["activity_type"] == "login"].reset_index(drop=True)
-    logouts = subset[subset["activity_type"] == "logout"].reset_index(drop=True)
-    sessions = pd.DataFrame(
-        {
-            "user_id": logins["user_id"],
-            "login_time": logins["time"],
-            "logout_time": logouts["time"],
-        }
-    )
-    sessions["duration"] = sessions["logout_time"] - sessions["login_time"]
-    sessions = sessions.set_index("login_time")
-    sessions = sessions.groupby(pd.Grouper(freq=frequency)).mean()
 
-    return sessions.to_json()
+    return subset.to_json()
+    # logins = subset[subset["activity_type"] == "login"].reset_index()
+    # logouts = subset[subset["activity_type"] == "logout"].reset_index()
+    # sessions = pd.DataFrame(
+    #     {
+    #         "index": logins["time"].copy(),
+    #         "login_time": logins["time"].copy(),
+    #         "logout_time": logouts["time"].copy(),
+    #         "user_id": logins["user_id"].copy(),
+    #     }
+    # )
+
+    # sessions["duration"] = sessions["logout_time"] - sessions["login_time"]
+    # sessions["duration"] = sessions["duration"].dt.total_seconds()
+    # sessions = sessions.set_index("index_login")
+    # sessions = sessions.groupby(pd.Grouper(freq=frequency)).mean()#.reset_index()
+    # sessions["duration"] = sessions["duration"]
+    #
+    # return sessions.to_json()
 
 
 @app.get("/activities/")
