@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 from enum import Enum
 from pydantic import PositiveInt, EmailStr, field_validator, model_validator, BaseModel
 from typing import Self
@@ -79,7 +78,7 @@ class Activity(BaseModel, validate_assignment=True):
     """
 
     activity_id: uuid.UUID
-    time: datetime
+    time: str
     user_id: PositiveInt
     activity_type: ActivityTypes
     activity_details: str | None = None
@@ -92,7 +91,7 @@ class Activity(BaseModel, validate_assignment=True):
         if isinstance(entry, str):
             try:
                 assert ("Z" in entry) or ("+00:00" in entry)
-                return datetime.fromisoformat(entry)
+                return entry
             except ValueError:
                 raise ValueError(
                     'Incorrect data format, should be "YYYY-MM-DDTHH:MM:SSZ" or "YYYY-MM-DDTHH:MM:SS+00:00" (UTC time)'

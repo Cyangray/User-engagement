@@ -3,7 +3,7 @@ import os
 import time
 from dotenv import dotenv_values
 
-env_path = ".env"
+env_path = "../.env"
 if os.path.exists(env_path):
     env_values = dotenv_values(env_path)
     env_variables = [

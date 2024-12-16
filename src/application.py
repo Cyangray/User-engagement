@@ -4,10 +4,13 @@ import pandas as pd
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
-from pydantic import PositiveInt, EmailStr
+from pydantic import PositiveInt, EmailStr, PositiveFloat
 from pydantic_extra_types.country import CountryAlpha2
+
+from tools.generate_dataset import generate_dataset
 from src.models import User, Activity, SuperUser, SuperUserRoles, ActivityTypes
 from tools.db_operations import retrieve_items, insert_item, sql_to_dataframe
+from tools.shortcuts import reset_tables
 from tools.tools import (
     short_uuid4_generator,
     long_uuid4_generator,
@@ -18,7 +21,6 @@ from tools.tools import (
     validate_time_entries,
 )
 from tools.ConnectionManager import get_db
-# import matplotlib.pyplot as plt #will be useful soon
 
 
 @asynccontextmanager
@@ -183,7 +185,6 @@ async def histogram_activity_types_grouped(
 
     **time_bin** *string*: time bin to use when grouping activity types. It may take the values "hour", "day", "month", "year".
 
-
     **activity1** to **activity4** *string*: The activity types to count. Each parameter may take the values "login", "logout", "purchase" and "click". If nothing is chosen, the default "login", "logout" and "purchase" are chosen.
 
     **start_time** and **end_time** *string in the YYYY-MM-DDTHH:MM:SSZ format*: Start and end times for the time period under consideration.
@@ -198,20 +199,25 @@ async def histogram_activity_types_grouped(
     # Connect to database and extract dataframe
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
-        df = sql_to_dataframe("activities", cur)
+        times = filter_time(start_time, end_time, period_days, period_hours)
+        where_query = (
+            f"time >= timestamptz '{times[0]}' AND time < timestamptz '{times[1]}'"
+        )
+        df = sql_to_dataframe("activities", cur, where=where_query)
 
     # filter for time period and activity type
     activity_types = polish_activity_types_list(
         [activity1, activity2, activity3, activity4],
         default=["login", "purchase", "logout"],
     )
-    df = filter_time(df, start_time, end_time, period_days, period_hours)
     subset = df[df["activity_type"].isin(activity_types)]
     subset[time_bin] = getattr(df["time"].dt, time_bin)
 
     # group according to time bin
-    subset.groupby([subset[time_bin], "activity_type"]).size().unstack(fill_value=0)
-    return subset.to_html()  # TODO: fix output format later, and fix tests
+    subset = (
+        subset.groupby([subset[time_bin], "activity_type"]).size().unstack(fill_value=0)
+    )
+    return subset.to_json()
 
 
 @app.get("/total_activity_over_time/")
@@ -245,18 +251,21 @@ async def total_activity_over_time(
     check_for_allowed_freq_string(frequency)
     validate_time_entries(period_days, period_hours, start_time, end_time)
 
-    # Connect to database and extract dataframe
+    # Connect to database, extract dataframe and filter for time period
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
-        df = sql_to_dataframe("activities", cur)
+        times = filter_time(start_time, end_time, period_days, period_hours)
+        where_query = (
+            f"time >= timestamptz '{times[0]}' AND time < timestamptz '{times[1]}'"
+        )
+        df = sql_to_dataframe("activities", cur, where=where_query)
 
-    # filter for time period and activity type
+    #  filter for activity type
     activity_types = polish_activity_types_list(
         [activity1, activity2, activity3, activity4],
         default=["login", "purchase", "logout"],
     )
-    subset = filter_time(df, start_time, end_time, period_days, period_hours)
-    subset = subset[subset["activity_type"].isin(activity_types)]
+    subset = df[df["activity_type"].isin(activity_types)]
 
     # fill time bins
     subset = subset.groupby(["time", "activity_type"]).size().reset_index(name="count")
@@ -264,8 +273,7 @@ async def total_activity_over_time(
         0
     )
     subset = subset.groupby(pd.Grouper(freq=frequency)).sum()
-    # TODO: in plot: stacked bars
-    return subset.to_html()
+    return subset.to_json()
 
 
 @app.get("/purchases/")
@@ -293,15 +301,18 @@ async def avg_purchases(
     check_for_allowed_freq_string(frequency)
     validate_time_entries(period_days, period_hours, start_time, end_time)
 
-    # Connect to database and extract dataframe
+    # Connect to database, extract dataframe and filter for time period
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
-        df = sql_to_dataframe("activities", cur)
+        times = filter_time(start_time, end_time, period_days, period_hours)
+        where_query = (
+            f"time >= timestamptz '{times[0]}' AND time < timestamptz '{times[1]}'"
+        )
+        df = sql_to_dataframe("activities", cur, where=where_query)
 
-    # filter for time period and activity type
+    # filter for activity type
     activity_types = ["login", "purchase"]
-    subset = filter_time(df, start_time, end_time, period_days, period_hours)
-    subset = subset[subset["activity_type"].isin(activity_types)]
+    subset = df[df["activity_type"].isin(activity_types)]
 
     # fill time bins
     subset = subset.groupby(["time", "activity_type"]).size().reset_index(name="count")
@@ -313,7 +324,7 @@ async def avg_purchases(
     # calculate purchases per login per time bin
     subset["avg_purchases_per_login"] = subset["purchase"] / subset["login"]
 
-    return subset.to_html()
+    return subset.to_json()
 
 
 @app.get("/avg_time/")
@@ -341,30 +352,38 @@ async def avg_time_spent(
     check_for_allowed_freq_string(frequency)
     validate_time_entries(period_days, period_hours, start_time, end_time)
 
-    # Connect to database and extract dataframe
+    # Connect to database, extract dataframe and filter for time period
     conn = app.state.connection_manager.connection
     with conn.cursor() as cur:
-        df = sql_to_dataframe("activities", cur)
-
-    # filter for time period
-    subset = filter_time(df, start_time, end_time, period_days, period_hours)
+        times = filter_time(start_time, end_time, period_days, period_hours)
+        where_query = (
+            f"time >= timestamptz '{times[0]}' AND time < timestamptz '{times[1]}'"
+        )
+        df = sql_to_dataframe("activities", cur, where=where_query)
 
     # create new dataframe with session information (user_id, login_time, logout_time, duration)
-    subset = subset[["time", "user_id", "activity_type"]]
-    logins = subset[subset["activity_type"] == "login"].reset_index(drop=True)
-    logouts = subset[subset["activity_type"] == "logout"].reset_index(drop=True)
+    subset = df[["time", "user_id", "activity_type"]]
+
+    # return subset.to_json()
+    logins = subset[subset["activity_type"] == "login"].reset_index()
+    logouts = subset[subset["activity_type"] == "logout"].reset_index()
     sessions = pd.DataFrame(
         {
-            "user_id": logins["user_id"],
+            "index_time": logins["time"],
             "login_time": logins["time"],
             "logout_time": logouts["time"],
+            "user_id": logins["user_id"],
         }
     )
     sessions["duration"] = sessions["logout_time"] - sessions["login_time"]
-    sessions = sessions.set_index("login_time")
-    sessions = sessions.groupby(pd.Grouper(freq=frequency)).mean()
+    sessions = sessions.set_index("index_time")
+    sessions = sessions.groupby(pd.Grouper(freq=frequency)).mean().reset_index()
+    sessions["duration"] = (
+        sessions["duration"].dt.total_seconds() / 60
+    )  # convert from s to min
 
-    return sessions.to_html()
+    df = sessions[["index_time", "duration"]]
+    return df.to_json()
 
 
 @app.get("/activities/")
@@ -400,16 +419,29 @@ async def read_activities_by_userid(
     return act_list
 
 
-# # plot something for just one user (work in progress, but it shows that the code works)
-# subset = df[df["user_id"] == users[0].user_id]
-# subset = subset[["time", "activity_type"]]
-# subset.set_index("time", inplace=True)
-# subset = (
-#     subset.groupby("activity_type")
-#     .resample("W")
-#     .size()
-#     .unstack(fill_value=0)
-#     .transpose()
-# )
-# subset.plot(kind="bar", stacked=True)
-# plt.show()
+@app.post("/regen_dataset/")
+async def regenerate_dataset(
+    n_users: PositiveInt,
+    clicks_per_minute: PositiveFloat,
+    session_length_hours: PositiveFloat,
+    sessions_per_year: PositiveInt,
+) -> None:
+    """
+    Function that, when called, erases and recreate a new dataset in the database.
+
+    ## parameters
+    **n_users** *integer*: number of uses to be created.
+    **clicks_per_minute** *integer*: average number of clicks per minute per user.
+    **session_length_hours** *integer*: how long is a user session on average (time between login and logout)
+    **sessions_per_year** *integer*: How many sessions per year per user.
+
+    """
+    sql_string = reset_tables()
+    app.state.connection_manager.connection.cursor().execute(sql_string)
+    generate_dataset(
+        n_users,
+        clicks_per_minute,
+        session_length_hours,
+        sessions_per_year,
+        connection_manager=app.state.connection_manager,
+    )

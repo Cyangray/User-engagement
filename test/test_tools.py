@@ -15,8 +15,8 @@ def test_filter_time_start_end(mock_dataframe):
     end_time = "2020-04-23T15:00:01Z"
     period_days = 0
     period_hours = 0
-    df = filter_time(mock_dataframe, start_time, end_time, period_days, period_hours)
-    assert len(df) == 1
+    times = filter_time(start_time, end_time, period_days, period_hours)
+    assert times == [start_time, end_time]
 
 
 def test_filter_time_period_end(mock_dataframe):
@@ -24,8 +24,9 @@ def test_filter_time_period_end(mock_dataframe):
     period_days = 0
     period_hours = 3
     end_time = "2020-04-23T16:00:02Z"
-    df = filter_time(mock_dataframe, start_time, end_time, period_days, period_hours)
-    assert len(df) == 2
+    times = filter_time(start_time, end_time, period_days, period_hours)
+    result_start_time = "2020-04-23T13:00:02+00:00"
+    assert times == [result_start_time, end_time]
 
 
 def test_polish_activity_types_list():

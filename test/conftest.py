@@ -7,6 +7,8 @@ from tools.ConnectionManager import ConnectionManager
 from fastapi.testclient import TestClient
 import os
 
+from tools.shortcuts import reset_tables
+
 
 @pytest.fixture(scope="session")
 def db_connection():
@@ -60,24 +62,7 @@ def create_test_tables():
     Helper fixture saving the command to erase and rebuild the SQL tables to be used in tests.
     :return: a list of SQL commands.
     """
-    commands = """
-                DROP TABLE IF EXISTS activities;
-                DROP TABLE IF EXISTS users;
-                CREATE TABLE users (
-                user_id INT PRIMARY KEY,
-                username TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                age SMALLINT,
-                country VARCHAR(2)
-                );
-                CREATE TABLE activities (
-                activity_id UUID PRIMARY KEY,
-                user_id INT REFERENCES users (user_id),
-                time TIMESTAMPTZ,
-                activity_type TEXT,
-                activity_details TEXT
-                );
-                """
+    commands = reset_tables()
     return commands
 
 

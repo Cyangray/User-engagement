@@ -177,6 +177,7 @@ def test_histogram_activity_types_grouped(
             "activity3": "purchase",
             "period_days": "30",
             "period_hours": "0",
+            "end_time": "2020-04-28T12:00:01Z",
         },
     )
 
@@ -211,6 +212,8 @@ def test_total_activity_over_time(
             "activity1": "login",
             "activity2": "logout",
             "activity3": "purchase",
+            "end_time": "2020-04-28T12:00:01Z",
+            "period_days": "30",
         },
     )
 
@@ -276,6 +279,8 @@ def test_avg_time_spent(
         "/avg_time/",
         params={
             "frequency": "MS",
+            "end_time": "2020-04-28T12:00:01Z",
+            "period_days": "30",
         },
     )
 

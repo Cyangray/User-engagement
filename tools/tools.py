@@ -1,5 +1,4 @@
 from uuid import uuid4
-import pandas as pd
 import datetime
 from fastapi import HTTPException
 from pandas.tseries.frequencies import to_offset
@@ -21,20 +20,18 @@ def long_uuid4_generator():
 
 
 def filter_time(
-    df: pd.DataFrame,
     start_time: str = None,
     end_time: str = None,
     period_days: int = 0,
     period_hours: int = 0,
 ):
     """
-    Helper function to filter a Pandas dataframe with pd.Timestamp objects stored in a column called "time". It will either select the times between a start_time and an end_time, or using an end_time and a time period backwards. If no end_time is selected, "now" is chosen. If no start_time or period is selected, 30 days is chosen as interval.
-    :param df: the Pandas dataframe. It must have a column of pd.Timestamps called "time".
+    Helper function that validates and converts inputs to a start and end time to use in a SQL query. It will either return start_time and end_time if both are provided, or it will use the end_time and a time period backwards. If no end_time is selected, "now" is chosen. If no start_time or period is selected, 30 days is chosen as interval.
     :param start_time: start time (optional) in iso8601 format.
     :param end_time: end time (optional) in iso8601 format.
     :param period_days: time period (optional) in int.
     :param period_hours: time period (optional) in int.
-    :return: the filtered dataframe
+    :return: a list of two datetime strings, representing the start and the end time
     """
 
     assert validate_time_entries(period_days, period_hours, start_time, end_time)
@@ -43,17 +40,15 @@ def filter_time(
     if period_days or period_hours:
         period = datetime.timedelta(days=period_days, hours=period_hours)
 
-    if end_time is None:
-        end_time = pd.Timestamp.now(tz="Etc/UTC")
-    else:
-        end_time = datetime.datetime.fromisoformat(end_time)
+    if end_time is None or end_time == "":
+        end_time = datetime.datetime.now(tz=datetime.timezone.utc)
+        end_time = end_time.isoformat(timespec="seconds")
 
     if period and not start_time:
-        start_time = end_time - period
-    else:
-        start_time = datetime.datetime.fromisoformat(start_time)
+        start_time = datetime.datetime.fromisoformat(end_time) - period
+        start_time = start_time.isoformat(timespec="seconds")
 
-    return df[(df["time"] > start_time) & (df["time"] <= end_time)]
+    return [start_time, end_time]
 
 
 def polish_activity_types_list(activity_types_input, default):
