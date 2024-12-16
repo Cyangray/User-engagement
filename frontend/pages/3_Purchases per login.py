@@ -35,13 +35,18 @@ time_input_dict = {
 }
 
 st.markdown("## Plot")
-host = os.getenv("API_HOST")
-res = requests.get(
-    url=f"http://{host}:80/purchases/",
-    params={**time_input_dict, "frequency": frequency},
-)
+try:
+    host = os.getenv("API_HOST")
+    res = requests.get(
+        url=f"http://{host}:80/purchases/",
+        params={**time_input_dict, "frequency": frequency},
+    )
 
-df = pd.read_json(StringIO(res.json()))
-st.line_chart(data=df.loc[:, ["avg_purchases_per_login"]])
-st.markdown("## Table")
-st.dataframe(df.loc[:, ["avg_purchases_per_login"]])
+    df = pd.read_json(StringIO(res.json()))
+    st.line_chart(data=df.loc[:, ["avg_purchases_per_login"]])
+    st.markdown("## Table")
+    st.dataframe(df.loc[:, ["avg_purchases_per_login"]])
+except requests.exceptions.JSONDecodeError:
+    st.write(
+        'No data found to plot. The criteria might be too narrow, or there might be no data in the database. Have you clicked on "regenerate" in the homepage?'
+    )

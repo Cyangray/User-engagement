@@ -10,32 +10,6 @@ from tools.tools import short_uuid4_generator, long_uuid4_generator
 rng = np.random.default_rng()
 
 
-def create_test_tables():
-    """
-    Helper fixture saving the command to erase and rebuild the SQL tables to be used in tests.
-    :return: a list of SQL commands.
-    """
-    commands = """
-                DROP TABLE IF EXISTS activities;
-                DROP TABLE IF EXISTS users;
-                CREATE TABLE users (
-                user_id INT PRIMARY KEY,
-                username TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                age SMALLINT,
-                country VARCHAR(2)
-                );
-                CREATE TABLE activities (
-                activity_id UUID PRIMARY KEY,
-                user_id INT REFERENCES users (user_id),
-                time TIMESTAMPTZ,
-                activity_type TEXT,
-                activity_details TEXT
-                );
-                """
-    return commands
-
-
 def generate_fake_user(name=None, country=None, email=None, age=None):
     """
     function generating a dict to be passed for generation of a fake user. Same parameters as for User

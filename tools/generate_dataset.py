@@ -4,10 +4,10 @@ from tools.generate_dataset_tools import (
     generate_dates,
     generate_session,
     post_session,
-    create_test_tables,
 )
 
 from tools.ConnectionManager import get_db
+from tools.shortcuts import reset_tables
 
 N_USERS = 20
 CLICKS_PER_MINUTE = 1
@@ -28,7 +28,7 @@ def generate_dataset(
         close = True
         connection_manager = get_db()
     cursor = connection_manager.connection.cursor()
-    cursor.execute(create_test_tables())
+    cursor.execute(reset_tables())
     # generate users
     users = []
     for n in range(n_users):

@@ -70,12 +70,17 @@ time_input_dict = {
 
 st.markdown("## Plot")
 host = os.getenv("API_HOST")
-res = requests.get(
-    url=f"http://{host}:80/activity_types_grouped/",
-    params={**activity_input_dict, **time_input_dict, "time_bin": time_bin},
-)
+try:
+    res = requests.get(
+        url=f"http://{host}:80/activity_types_grouped/",
+        params={**activity_input_dict, **time_input_dict, "time_bin": time_bin},
+    )
 
-df = pd.read_json(StringIO(res.json()))
-st.bar_chart(data=df, stack=True)
-st.markdown("## Table")
-st.dataframe(df)
+    df = pd.read_json(StringIO(res.json()))
+    st.bar_chart(data=df, stack=True)
+    st.markdown("## Table")
+    st.dataframe(df)
+except requests.exceptions.JSONDecodeError:
+    st.write(
+        'No data found to plot. The criteria might be too narrow, or there might be no data in the database. Have you clicked on "regenerate" in the homepage?'
+    )
