@@ -27,8 +27,8 @@ the previous one. It may take some time, depending on how much data you decided 
 col1, col2, col3, col4 = st.columns(4)
 
 n_users = col1.number_input("number of users", 1, value=20)
-clicks_per_minute = col2.number_input("clicks per minute", 1, value=1)
-session_length_hours = col3.number_input("session length (hours)", 1, value=2)
+clicks_per_minute = col2.number_input("clicks per minute", 1.0, value=1.0)
+session_length_hours = col3.number_input("session length (hours)", 1.0, value=2.0)
 sessions_per_year = col4.number_input("sessions per year", 1, value=10)
 
 input_dict = {

@@ -4,7 +4,7 @@ import pandas as pd
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
-from pydantic import PositiveInt, EmailStr
+from pydantic import PositiveInt, EmailStr, PositiveFloat
 from pydantic_extra_types.country import CountryAlpha2
 
 from tools.generate_dataset import generate_dataset
@@ -421,10 +421,10 @@ async def read_activities_by_userid(
 
 @app.post("/regen_dataset/")
 async def regenerate_dataset(
-    n_users: int,  # positive int!
-    clicks_per_minute: int,  # positive int!
-    session_length_hours: int,  # positive int!
-    sessions_per_year: int,  # positive int!
+    n_users: PositiveInt,
+    clicks_per_minute: PositiveFloat,
+    session_length_hours: PositiveFloat,
+    sessions_per_year: PositiveInt,
 ) -> None:
     """
     Function that, when called, erases and recreate a new dataset in the database.
