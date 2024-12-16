@@ -102,6 +102,16 @@ def generate_session(date, user_id, n_activities_per_minute, length_session):
     """
     list_of_activities = []
 
+    if (date.month == 11 and date.day >= 15 and date.day <= 29) or (
+        date.month == 12 and date.day >= 15 and date.day < 25
+    ):
+        n_activities_per_minute = n_activities_per_minute * 1.5
+        length_session = length_session * 1.5
+        if date.month == 11 and date.weekday == 4:
+            # black friday
+            n_activities_per_minute = n_activities_per_minute * 2
+            length_session = length_session * 1.5
+
     # login time: normally distributed between 6AM and 8PM
     login_time_seconds = get_truncated_normal(
         rng, mean=13 * 60 * 60, sd=2 * 60 * 60, low=6 * 60 * 60, upp=20 * 60 * 60
