@@ -22,7 +22,7 @@ CMD ["fastapi", "run", "src/application.py", "--port", "80"]
 
 # Stage 2: Testing
 FROM base AS test
-RUN poetry install --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi --without frontend
 COPY src/ /code/src/
 COPY tools/ /code/tools/
 COPY test/ /code/test/
@@ -39,6 +39,6 @@ CMD ["fastapi", "run", "src/application.py", "--port", "80"]
 
 # Stage 4: frontend
 FROM base AS frontend
-RUN poetry install --no-interaction --no-ansi --without test
+RUN poetry install --no-interaction --no-ansi --only frontend
 COPY frontend/ /code/frontend/
 CMD ["streamlit", "run", "frontend/homepage.py"]
