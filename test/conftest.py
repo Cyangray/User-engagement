@@ -1,6 +1,8 @@
+import pandas as pd
 import pytest
 from dotenv import dotenv_values
 from src.application import app
+from src.models import Activity
 from tools.ConnectionManager import ConnectionManager
 from fastapi.testclient import TestClient
 import os
@@ -69,7 +71,7 @@ def create_test_tables():
                 country VARCHAR(2)
                 );
                 CREATE TABLE activities (
-                activity_id INT PRIMARY KEY,
+                activity_id UUID PRIMARY KEY,
                 user_id INT REFERENCES users (user_id),
                 time TIMESTAMPTZ,
                 activity_type TEXT,
@@ -92,7 +94,7 @@ def activity_id_test():
     """
     Fixture always returning the same activity_id for tests.
     """
-    return 1157425173
+    return "8e1ec19c-02e4-408b-93c1-9664e800e772"
 
 
 @pytest.fixture(scope="session")
@@ -163,6 +165,39 @@ def mock_data_activity(user_id_test, activity_id_test):
 
 
 @pytest.fixture(scope="session")
+def mock_data_activity2(user_id_test, activity_id_test):
+    """
+    Fixture returning a test activity to be used in tests. The user_id is linked to the first test_user.
+    """
+    activity_id_test2 = activity_id_test[:-1] + "3"
+
+    mock_data_activity = {
+        "user_id": user_id_test,
+        "activity_id": activity_id_test2,
+        "time": "2020-04-23T14:00:01Z",
+        "activity_type": "purchase",
+        "activity_details": "This is a test activity",
+    }
+    return mock_data_activity
+
+
+@pytest.fixture(scope="session")
+def mock_data_activity3(user_id_test, activity_id_test):
+    """
+    Fixture returning a test activity to be used in tests. The user_id is linked to the first test_user.
+    """
+    activity_id_test3 = activity_id_test[:-1] + "4"
+    mock_data_activity = {
+        "user_id": user_id_test,
+        "activity_id": activity_id_test3,
+        "time": "2020-04-23T16:00:01Z",
+        "activity_type": "logout",
+        "activity_details": "This is a test activity",
+    }
+    return mock_data_activity
+
+
+@pytest.fixture(scope="session")
 def mock_data_superuser_complete(user_id_test):
     """
     Fixture returning a test superuser to be used in tests.
@@ -176,3 +211,15 @@ def mock_data_superuser_complete(user_id_test):
         "role": "admin",
     }
     return mock_data_superuser_complete
+
+
+@pytest.fixture(scope="session")
+def mock_dataframe(
+    activity_id_test, mock_data_activity, mock_data_activity2, mock_data_activity3
+):
+    activity1 = Activity(**mock_data_activity)
+    activity2 = Activity(**mock_data_activity2)
+    activity3 = Activity(**mock_data_activity3)
+
+    df = pd.DataFrame([activity1.__dict__, activity2.__dict__, activity3.__dict__])
+    return df

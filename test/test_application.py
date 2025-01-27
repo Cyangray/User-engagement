@@ -148,6 +148,141 @@ def test_post_activity_no_userid(
     assert response.json()["detail"] == "User ID not found"
 
 
+def test_histogram_activity_types_grouped(
+    create_test_tables,
+    mock_data_activity,
+    mock_data_activity2,
+    mock_data_activity3,
+    client_test,
+    mock_data_user,
+):
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        cur.execute(create_test_tables)
+        user = User(**mock_data_user)
+        insert_item(user, "users", cur)
+        activity1 = Activity(**mock_data_activity)
+        activity2 = Activity(**mock_data_activity2)
+        activity3 = Activity(**mock_data_activity3)
+        insert_item(activity1, "activities", cur)
+        insert_item(activity2, "activities", cur)
+        insert_item(activity3, "activities", cur)
+
+    response = client_test.get(
+        "/activity_types_grouped/",
+        params={
+            "time_bin": "hour",
+            "activity1": "login",
+            "activity2": "logout",
+            "activity3": "purchase",
+            "period_days": "30",
+            "period_hours": "0",
+        },
+    )
+
+    assert response.status_code == 200
+    # TODO: expand test with expected result, when the main function's output is fixed
+
+
+def test_total_activity_over_time(
+    create_test_tables,
+    mock_data_activity,
+    mock_data_activity2,
+    mock_data_activity3,
+    client_test,
+    mock_data_user,
+):
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        cur.execute(create_test_tables)
+        user = User(**mock_data_user)
+        insert_item(user, "users", cur)
+        activity1 = Activity(**mock_data_activity)
+        activity2 = Activity(**mock_data_activity2)
+        activity3 = Activity(**mock_data_activity3)
+        insert_item(activity1, "activities", cur)
+        insert_item(activity2, "activities", cur)
+        insert_item(activity3, "activities", cur)
+
+    response = client_test.get(
+        "/total_activity_over_time/",
+        params={
+            "time_bin": "hour",
+            "activity1": "login",
+            "activity2": "logout",
+            "activity3": "purchase",
+        },
+    )
+
+    assert response.status_code == 200
+    # TODO: expand test with expected result, when the main function's output is fixed
+
+
+def test_avg_purchases(
+    create_test_tables,
+    mock_data_activity,
+    mock_data_activity2,
+    mock_data_activity3,
+    client_test,
+    mock_data_user,
+):
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        cur.execute(create_test_tables)
+        user = User(**mock_data_user)
+        insert_item(user, "users", cur)
+        activity1 = Activity(**mock_data_activity)
+        activity2 = Activity(**mock_data_activity2)
+        activity3 = Activity(**mock_data_activity3)
+        insert_item(activity1, "activities", cur)
+        insert_item(activity2, "activities", cur)
+        insert_item(activity3, "activities", cur)
+
+    response = client_test.get(
+        "/purchases/",
+        params={
+            "end_time": "2020-04-23T16:00:01Z",
+            "period_days": "1",
+            "period_hours": "0",
+            "frequency": "h",
+        },
+    )
+
+    assert response.status_code == 200
+    # TODO: expand test with expected result, when the main function's output is fixed
+
+
+def test_avg_time_spent(
+    create_test_tables,
+    mock_data_activity,
+    mock_data_activity2,
+    mock_data_activity3,
+    client_test,
+    mock_data_user,
+):
+    conn = app.state.connection_manager.connection
+    with conn.cursor() as cur:
+        cur.execute(create_test_tables)
+        user = User(**mock_data_user)
+        insert_item(user, "users", cur)
+        activity1 = Activity(**mock_data_activity)
+        activity2 = Activity(**mock_data_activity2)
+        activity3 = Activity(**mock_data_activity3)
+        insert_item(activity1, "activities", cur)
+        insert_item(activity2, "activities", cur)
+        insert_item(activity3, "activities", cur)
+
+    response = client_test.get(
+        "/avg_time/",
+        params={
+            "frequency": "MS",
+        },
+    )
+
+    assert response.status_code == 200
+    # TODO: expand test with expected result, when the main function's output is fixed
+
+
 def test_filter_activities_by_user_id(
     mock_data_user, mock_data_activity, create_test_tables, client_test, mock_data_user2
 ) -> None:

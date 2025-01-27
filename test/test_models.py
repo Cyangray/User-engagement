@@ -142,6 +142,8 @@ def test_validity_activity(mock_data_activity) -> None:
     for key, value in mock_data_activity.items():
         if key == "time":
             assert activity.time == datetime.fromisoformat(mock_data_activity["time"])
+        elif key == "activity_id":
+            assert str(activity.activity_id) == value
         else:
             assert activity.__dict__[key] == value
 
