@@ -8,6 +8,10 @@ import re
 
 
 class ActivityTypes(str, Enum):
+    """
+    Enum class. List of possible activities, defining the "activity_type" attribute in Activity.
+    """
+
     click = "click"
     login = "login"
     logout = "logout"
@@ -15,12 +19,20 @@ class ActivityTypes(str, Enum):
 
 
 class SuperUserRoles(str, Enum):
+    """
+    Enum class. List of possible superuser roles, defining the "role" attribute in SuperUser.
+    """
+
     admin = "admin"
     moderator = "moderator"
     support = "support"
 
 
 class User(BaseModel, validate_assignment=True):
+    """
+    User model, called by the post_user function in application.py.
+    """
+
     user_id: PositiveInt
     username: str
     email: EmailStr
@@ -29,6 +41,9 @@ class User(BaseModel, validate_assignment=True):
 
     @field_validator("username", mode="before")
     def username_validator(cls, v):
+        """
+        Validator checking that the username attribute is only letters, and longer than 2 characters.
+        """
         pattern = r"^[a-zA-Z]*$"
         if re.match(pattern, v) and len(v) >= 2:
             return v
@@ -39,6 +54,9 @@ class User(BaseModel, validate_assignment=True):
 
     @model_validator(mode="after")
     def check_if_both_age_and_country(self) -> Self:
+        """
+        Validator checking that either age or country are provided.
+        """
         age = self.age
         country = self.country
         if age is None and country is None:
@@ -47,10 +65,18 @@ class User(BaseModel, validate_assignment=True):
 
 
 class SuperUser(User, validate_assignment=True):
+    """
+    SuperUser model. It expands the User model by adding the SuperUser role.
+    """
+
     role: SuperUserRoles
 
 
 class Activity(BaseModel, validate_assignment=True):
+    """
+    Activity model. Called by the function "post_activity" in application.py.
+    """
+
     activity_id: PositiveInt
     time: datetime
     user_id: PositiveInt
@@ -59,6 +85,9 @@ class Activity(BaseModel, validate_assignment=True):
 
     @field_validator("time", mode="before")
     def prevalidate_datetime(cls, entry):
+        """
+        Validator checking that the time attribute is in the form "YYYY-MM-DDTHH:MM:SSZ", if string.
+        """
         if isinstance(entry, str):
             if ("Z" in entry) or ("+00:00" in entry):
                 return datetime.fromisoformat(entry)
