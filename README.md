@@ -28,6 +28,9 @@ TEST_POSTGRES_HOST=postgres_test
 and then run `docker compose up` in your terminal.
 The API will then be accessible at `http://0.0.0.0:80/docs` in your browser. To close the API, press command/ctrl+c in the same terminal, and type `docker compose down`.
 
+### Dashboard
+The dashboard is opened by accessing `http://0.0.0.0:8501` on your browser, after building the containers as explained above.
+
 ## Local
 
 To run it locally (not recommended), you should first set up a database container. When this is set up, and you have saved your environment variables in a `.env` file in the root folder, you proceed with the installation guide for the API, and finally run it.

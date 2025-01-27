@@ -10,32 +10,6 @@ from tools.tools import short_uuid4_generator, long_uuid4_generator
 rng = np.random.default_rng()
 
 
-def create_test_tables():
-    """
-    Helper fixture saving the command to erase and rebuild the SQL tables to be used in tests.
-    :return: a list of SQL commands.
-    """
-    commands = """
-                DROP TABLE IF EXISTS activities;
-                DROP TABLE IF EXISTS users;
-                CREATE TABLE users (
-                user_id INT PRIMARY KEY,
-                username TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                age SMALLINT,
-                country VARCHAR(2)
-                );
-                CREATE TABLE activities (
-                activity_id UUID PRIMARY KEY,
-                user_id INT REFERENCES users (user_id),
-                time TIMESTAMPTZ,
-                activity_type TEXT,
-                activity_details TEXT
-                );
-                """
-    return commands
-
-
 def generate_fake_user(name=None, country=None, email=None, age=None):
     """
     function generating a dict to be passed for generation of a fake user. Same parameters as for User
@@ -127,6 +101,16 @@ def generate_session(date, user_id, n_activities_per_minute, length_session):
     :return: list of Activity objects representing one user session
     """
     list_of_activities = []
+
+    if (date.month == 11 and date.day >= 15 and date.day <= 29) or (
+        date.month == 12 and date.day >= 15 and date.day < 25
+    ):
+        n_activities_per_minute = n_activities_per_minute * 1.5
+        length_session = length_session * 1.5
+        if date.month == 11 and date.weekday == 4:
+            # black friday
+            n_activities_per_minute = n_activities_per_minute * 2
+            length_session = length_session * 1.5
 
     # login time: normally distributed between 6AM and 8PM
     login_time_seconds = get_truncated_normal(

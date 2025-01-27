@@ -56,3 +56,16 @@ services:
       - "81:80"
     depends_on:
       - db-test
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+    container_name: streamlit_frontend
+    environment:
+      API_HOST: api
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
